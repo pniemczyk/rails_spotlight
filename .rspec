@@ -1,0 +1,5 @@
+--format <%= ENV['SPEC_FORMATTER'].nil? ? 'progress' : ENV['SPEC_FORMATTER'] %>
+--color
+--require spec_helper
+--order rand
+--no-profile
