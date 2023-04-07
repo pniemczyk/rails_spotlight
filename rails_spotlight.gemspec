@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = spec.summary
   spec.homepage = 'https://github.com/pniemczyk/rails_spotlight'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 3.2.0'
+  spec.required_ruby_version = '>= 2.0.0'
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = spec.homepage
@@ -29,9 +29,14 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  # Uncomment to register a new dependency of your gem
-  # spec.add_dependency "example-gem", "~> 1.0"
-
-  # For more information and examples about making a new gem, check out our
-  # guide at: https://bundler.io/guides/creating_gem.html
+  spec.add_dependency 'rack-contrib', '>= 1.1', '< 3'
+  spec.add_dependency 'railties', '>= 3.0.0', '< 7.1'
+  spec.add_runtime_dependency 'meta_request', '~> 0.7'
+  spec.add_development_dependency 'awesome_print', '~> 1.6'
+  spec.add_development_dependency 'guard', '~> 2.12'
+  spec.add_development_dependency 'guard-rspec', '~> 4.5'
+  spec.add_development_dependency 'guard-rubocop', '~> 1.2'
+  spec.add_development_dependency 'rspec', '~> 3.8.0'
+  spec.add_development_dependency 'rubocop', '~> 0.74.0'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end

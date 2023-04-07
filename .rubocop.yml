@@ -1,7 +1,10 @@
 AllCops:
-  TargetRubyVersion: 3.2
+  TargetRubyVersion: 2.0
   DefaultFormatter: progress
-  SuggestExtensions: true
+  SuggestExtensions:
+    rubocop-rake: true
+    rubocop-rspec: true
+
   NewCops: enable
 
 Style/StringLiterals:
@@ -35,3 +38,6 @@ Layout/HashAlignment:
   EnforcedHashRocketStyle: table
   EnforcedColonStyle: table
   EnforcedLastArgumentHashStyle: always_inspect
+
+Style/Documentation:
+  Enabled: false
