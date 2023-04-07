@@ -2,6 +2,14 @@
 
 ## Installation
 
+Add this line to your application's Gemfile:
+
+```ruby
+group :development do
+  gem 'meta_request'
+end
+```
+
 ## Usage
 
 ## Development
