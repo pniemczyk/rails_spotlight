@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 3.2
+  TargetRubyVersion: 2.0
   DefaultFormatter: progress
   SuggestExtensions:
     rubocop-rake: true

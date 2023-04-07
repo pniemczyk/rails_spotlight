@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails/railtie'
+require 'meta_request'
 
 module RailsSpotlight
   class Railtie < ::Rails::Railtie

@@ -6,6 +6,6 @@ guard :rspec, cmd: 'rspec' do
 end
 
 guard :rubocop, all_on_start: false, cli: ['--format', 'clang'] do
-  watch(%r{.+\.rb$})
+  watch(/.+\.rb$/)
   watch(%r{(?:.+/)?\.rubocop\.yml$}) { |m| File.dirname(m[0]) }
 end
