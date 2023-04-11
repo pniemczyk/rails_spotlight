@@ -29,7 +29,7 @@ module RailsSpotlight
         end
 
         def path_valid?
-          file_path.to_s.include?(Rails.root.to_s) && File.exist?(file_path)
+          File.exist?(file_path)
         end
 
         def file_path
