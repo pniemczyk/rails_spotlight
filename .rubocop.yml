@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.0
+  TargetRubyVersion: 2.5
   DefaultFormatter: progress
   SuggestExtensions:
     rubocop-rake: true
@@ -15,7 +15,7 @@ Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
 
-Layout/LineLength:
+Metrics/LineLength:
   Max: 220
 
 Metrics/ModuleLength:
@@ -33,7 +33,7 @@ Metrics/ParameterLists:
   Max: 10
   CountKeywordArgs: false
 
-Layout/HashAlignment:
+Metrics/HashAlignment:
   Enabled: false
   EnforcedHashRocketStyle: table
   EnforcedColonStyle: table
