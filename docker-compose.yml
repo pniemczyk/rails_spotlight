@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+  rubocop:
+    env_file:
+     - 'docker-variables.env'
+    build: .
+    command: bundle exec rubocop
+  spec-unit:
+    env_file:
+     - 'docker-variables.env'
+    build: .
+  spec-rails-5.2:
+    env_file:
+     - 'docker-variables.env'
+    build:
+      context: .
+      dockerfile: Dockerfile-rails-5.2
+  spec-rails-6.0:
+    env_file:
+     - 'docker-variables.env'
+    build:
+      context: .
+      dockerfile: Dockerfile-rails-6.0
+  spec-rails-6.1:
+    env_file:
+     - 'docker-variables.env'
+    build:
+      context: .
+      dockerfile: Dockerfile-rails-6.1
+  spec-rails-7.0:
+    env_file:
+     - 'docker-variables.env'
+    build:
+      context: .
+      dockerfile: Dockerfile-rails-7.0

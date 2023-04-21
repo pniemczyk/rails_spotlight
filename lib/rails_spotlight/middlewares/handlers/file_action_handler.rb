@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module RailsSpotlight
   module Middlewares
     module Handlers
@@ -25,7 +27,7 @@ module RailsSpotlight
         end
 
         def request_mode
-          @request_mode ||= json_request_body.fetch('mode') { 'read' }
+          @request_mode ||= json_request_body.fetch('mode', 'read')
         end
 
         def path_valid?

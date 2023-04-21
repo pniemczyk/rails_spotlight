@@ -1,11 +1,15 @@
 AllCops:
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.6
   DefaultFormatter: progress
   SuggestExtensions:
     rubocop-rake: true
     rubocop-rspec: true
-
   NewCops: enable
+  Exclude:
+    - "bin/**/*"
+    - "exe/**/*"
+    - "tmp/**/*"
+    - "extensions/**/*"
 
 Style/StringLiterals:
   Enabled: true

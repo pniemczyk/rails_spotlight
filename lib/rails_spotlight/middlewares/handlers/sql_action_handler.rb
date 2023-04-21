@@ -1,10 +1,18 @@
+# frozen_string_literal: true
+
 module RailsSpotlight
   module Middlewares
     module Handlers
       class SqlActionHandler < BaseActionHandler
         def execute
-          ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record', monotonic: true) do
-            ActiveSupport::ExecutionContext.set(rails_spotlight: request_id) do
+          if ActiveSupport.const_defined?('ExecutionContext')
+            ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record', monotonic: true) do
+              ActiveSupport::ExecutionContext.set(rails_spotlight: request_id) do
+                self.result = ActiveRecord::Base.connection.exec_query(query)
+              end
+            end
+          else
+            ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record') do
               self.result = ActiveRecord::Base.connection.exec_query(query)
             end
           end

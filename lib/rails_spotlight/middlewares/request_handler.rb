@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'handlers/base_action_handler'
 require_relative 'handlers/file_action_handler'
 require_relative 'handlers/sql_action_handler'

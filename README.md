@@ -1,5 +1,12 @@
 # RailsSpotlight
 
+Chrome extension [Rails Spotlight](https://chrome.google.com/webstore/detail/rails-spotlight/kfacifkandemkdemkliponofajohhnbp?hl=en-US).
+
+## Support for
+
+Rails 5+
+Ruby 2.6+
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -8,6 +15,14 @@ Add this line to your application's Gemfile:
 group :development do
   gem 'rails_spotlight'
 end
+```
+
+## Testing
+
+To run tests for all versions of Rails and Ruby, run:
+
+```bash
+docker-compose up
 ```
 
 ## Usage
