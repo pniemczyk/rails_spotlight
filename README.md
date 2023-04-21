@@ -4,8 +4,8 @@ Chrome extension [Rails Spotlight](https://chrome.google.com/webstore/detail/rai
 
 ## Support for
 
-Rails 5+
-Ruby 2.6+
+* Rails 5+
+* Ruby 2.6+
 
 ## Installation
 
