@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../../support/project'
+
 module RailsSpotlight
   module Middlewares
     module Handlers
@@ -19,7 +21,10 @@ module RailsSpotlight
         end
 
         def json_response_body
-          { source: text_response_body }
+          {
+            source: text_response_body,
+            project: ::RailsSpotlight::Support::Project.instance.name
+          }
         end
 
         def write_mode?

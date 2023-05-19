@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../../support/project'
+
 module RailsSpotlight
   module Middlewares
     module Handlers
@@ -36,7 +38,13 @@ module RailsSpotlight
         attr_accessor :error
 
         def json_response_body
-          { result: result, logs: logs, error: error.inspect, query_mode: force_execution? ? 'force' : 'default' }
+          {
+            result: result,
+            logs: logs,
+            error: error.inspect,
+            query_mode: force_execution? ? 'force' : 'default',
+            project: ::RailsSpotlight::Support::Project.instance.name
+          }
         end
 
         def logger(_, started, finished, unique_id, payload)

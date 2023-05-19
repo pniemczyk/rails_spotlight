@@ -17,6 +17,14 @@ group :development do
 end
 ```
 
+## Configuration
+
+environment variables
+
+```
+RAILS_SPOTLIGHT_PROJECT=MyProjectName
+```
+
 ## Testing
 
 To run tests for all versions of Rails and Ruby, run:
