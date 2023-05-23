@@ -7,17 +7,9 @@ module RailsSpotlight
     module Handlers
       class SqlActionHandler < BaseActionHandler
         def execute
-          if ActiveSupport.const_defined?('ExecutionContext')
-            ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record', monotonic: true) do
-              ActiveSupport::ExecutionContext.set(rails_spotlight: request_id) do
-                transaction
-              end
-            end
-          else
-            ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record') do
-              transaction
-            end
-          end
+          return transaction unless ActiveSupport.const_defined?('ExecutionContext')
+
+          transaction
         end
 
         private
@@ -25,7 +17,9 @@ module RailsSpotlight
         def transaction
           ActiveRecord::Base.transaction do
             begin
-              self.result = ActiveRecord::Base.connection.exec_query(query)
+              ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record', monotonic: true) do
+                run
+              end
             rescue => e
               self.error = e
             ensure
@@ -34,14 +28,23 @@ module RailsSpotlight
           end
         end
 
+        def run
+          return self.result = ActiveRecord::Base.connection.exec_query(query) if connection_options.blank? || !ActiveRecord::Base.respond_to?(:connected_to)
+
+          ActiveRecord::Base.connected_to(connection_options) do
+            self.result = ActiveRecord::Base.connection.exec_query(query)
+          end
+        end
+
         attr_accessor :result
         attr_accessor :error
 
         def json_response_body
           {
+            query: query,
             result: result,
             logs: logs,
-            error: error.inspect,
+            error: error.present? ? error.inspect : nil,
             query_mode: force_execution? ? 'force' : 'default',
             project: ::RailsSpotlight::Support::Project.instance.name
           }
@@ -59,6 +62,13 @@ module RailsSpotlight
 
         def query
           @query ||= json_request_body.fetch('query')
+        end
+
+        def connection_options
+          @connection_options ||= json_request_body
+                                    .fetch('connection_options', {})
+                                    .symbolize_keys
+                                    .slice(:database, :role, :shard, :prevent_writes) # TODO: Check for each rails version
         end
 
         def force_execution?
