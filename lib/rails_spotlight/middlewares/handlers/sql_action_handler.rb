@@ -27,11 +27,11 @@ module RailsSpotlight
 
         def transaction
           ActiveRecord::Base.transaction do
-            begin
+            begin # rubocop:disable Style/RedundantBegin
               ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record', monotonic: true) do
                 run
               end
-            rescue => e
+            rescue => e # rubocop:disable Style/RescueStandardError
               self.error = e
             ensure
               raise ActiveRecord::Rollback unless force_execution?
@@ -45,13 +45,12 @@ module RailsSpotlight
           connections = ActiveRecord::Base.connects_to(**connection_options)
 
           adapter = connections.find { |c| c.role == use['role'] && c.shard.to_s == use['shard'] }
-          raise UnprocessableEntity, "Connection not found for role: `#{use['role']}` and shard: `#{use['shard']}`" if adapter.blank?
+          raise UnprocessableEntity, "Connection not found for role: `#{use["role"]}` and shard: `#{use["shard"]}`" if adapter.blank?
 
           self.result = adapter.connection.exec_query(query)
         end
 
-        attr_accessor :result
-        attr_accessor :error
+        attr_accessor :result, :error
 
         def json_response_body
           {
@@ -92,9 +91,9 @@ module RailsSpotlight
 
         def connection_options
           @connection_options ||= raw_options
-                                    .symbolize_keys
-                                    .slice(:database, :shards)
-                                    .reject { |_, v| v.nil? || (!v.is_a?(TrueClass) && !v.is_a?(FalseClass) && v.empty?) } # TODO: Check for each rails version
+                                  .symbolize_keys
+                                  .slice(:database, :shards)
+                                  .reject { |_, v| v.nil? || (!v.is_a?(TrueClass) && !v.is_a?(FalseClass) && v.empty?) } # TODO: Check for each rails version
         end
 
         def force_execution?
