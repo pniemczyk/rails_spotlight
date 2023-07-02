@@ -7,12 +7,23 @@ module RailsSpotlight
     module Handlers
       class SqlActionHandler < BaseActionHandler
         def execute
+          validate_project!
           return transaction unless ActiveSupport.const_defined?('ExecutionContext')
 
-          transaction
+          ActiveSupport::ExecutionContext.set(rails_spotlight: request_id) do
+            transaction
+          end
         end
 
         private
+
+        def validate_project!
+          Rails.logger.warn required_projects
+          return if required_projects.blank?
+          return if required_projects.include?(::RailsSpotlight::Support::Project.instance.name)
+
+          raise UnprocessableEntity, "Check your connetction settings the current query is not allowed to be executed on the #{::RailsSpotlight::Support::Project.instance.name} project"
+        end
 
         def transaction
           ActiveRecord::Base.transaction do
@@ -29,11 +40,14 @@ module RailsSpotlight
         end
 
         def run
-          return self.result = ActiveRecord::Base.connection.exec_query(query) if connection_options.blank? || !ActiveRecord::Base.respond_to?(:connected_to)
+          return self.result = ActiveRecord::Base.connection.exec_query(query) if connection_options.blank? || !ActiveRecord::Base.respond_to?(:connects_to)
 
-          ActiveRecord::Base.connected_to(connection_options) do
-            self.result = ActiveRecord::Base.connection.exec_query(query)
-          end
+          connections = ActiveRecord::Base.connects_to(**connection_options)
+
+          adapter = connections.find { |c| c.role == use['role'] && c.shard.to_s == use['shard'] }
+          raise UnprocessableEntity, "Connection not found for role: `#{use['role']}` and shard: `#{use['shard']}`" if adapter.blank?
+
+          self.result = adapter.connection.exec_query(query)
         end
 
         attr_accessor :result
@@ -64,11 +78,23 @@ module RailsSpotlight
           @query ||= json_request_body.fetch('query')
         end
 
+        def raw_options
+          @raw_options ||= json_request_body.fetch('options', {}) || {}
+        end
+
+        def required_projects
+          @required_projects ||= raw_options.fetch('projects', [])
+        end
+
+        def use
+          @use ||= { 'shard' => 'default', 'role' => 'reading' }.merge(raw_options.fetch('use', {}))
+        end
+
         def connection_options
-          @connection_options ||= json_request_body
-                                    .fetch('connection_options', {})
+          @connection_options ||= raw_options
                                     .symbolize_keys
-                                    .slice(:database, :role, :shard, :prevent_writes) # TODO: Check for each rails version
+                                    .slice(:database, :shards)
+                                    .reject { |_, v| v.nil? || (!v.is_a?(TrueClass) && !v.is_a?(FalseClass) && v.empty?) } # TODO: Check for each rails version
         end
 
         def force_execution?
