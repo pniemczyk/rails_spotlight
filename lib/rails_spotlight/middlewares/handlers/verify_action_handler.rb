@@ -18,7 +18,10 @@ module RailsSpotlight
             body: request.body.read,
             content_type: request.content_type,
             request_method: request.request_method,
-            version: request.get_header('HTTP_X_RAILS_SPOTLIGHT')
+            version: request.get_header('HTTP_X_RAILS_SPOTLIGHT'),
+            current_gem_version: ::RailsSpotlight::VERSION,
+            project: ::RailsSpotlight.config.project_name,
+            action_cable_path: defined?(ActionCable) ? ActionCable&.server&.config&.mount_path : nil
           }
         end
       end

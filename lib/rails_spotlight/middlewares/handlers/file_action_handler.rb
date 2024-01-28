@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../../support/project'
-
 module RailsSpotlight
   module Middlewares
     module Handlers
@@ -9,7 +7,7 @@ module RailsSpotlight
         def execute
           raise NotFound, 'File not found' unless path_valid?
 
-          File.write(file_path, json_request_body.fetch('content')) if write_mode?
+          File.write(file_path, new_content) if write_mode?
         rescue => e # rubocop:disable Style/RescueStandardError
           raise UnprocessableEntity, e.message
         end
@@ -20,11 +18,16 @@ module RailsSpotlight
           File.read(file_path)
         end
 
+        def new_content
+          json_request_body.fetch('content')
+        end
+
         def json_response_body
           {
             source: text_response_body,
-            project: ::RailsSpotlight::Support::Project.instance.name
-          }
+            changed: write_mode?,
+            project: ::RailsSpotlight.config.project_name
+          }.merge(write_mode? ? { new_content: new_content } : {})
         end
 
         def write_mode?
@@ -40,7 +43,11 @@ module RailsSpotlight
         end
 
         def file_path
-          @file_path ||= Rails.root.join(json_request_body.fetch('file'))
+          @file_path ||= if json_request_body.fetch('file').start_with?(::RailsSpotlight.config.rails_root)
+                           json_request_body.fetch('file')
+                         else
+                           File.join(::RailsSpotlight.config.rails_root, json_request_body.fetch('file'))
+                         end
         end
       end
     end

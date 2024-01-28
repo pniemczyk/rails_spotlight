@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../../support/project'
-
 module RailsSpotlight
   module Middlewares
     module Handlers
@@ -20,9 +18,9 @@ module RailsSpotlight
         def validate_project!
           Rails.logger.warn required_projects
           return if required_projects.blank?
-          return if required_projects.include?(::RailsSpotlight::Support::Project.instance.name)
+          return if required_projects.include?(::RailsSpotlight.config.project_name)
 
-          raise UnprocessableEntity, "Check your connetction settings the current query is not allowed to be executed on the #{::RailsSpotlight::Support::Project.instance.name} project"
+          raise UnprocessableEntity, "Check your connetction settings the current query is not allowed to be executed on the #{::RailsSpotlight.config.project_name} project"
         end
 
         def transaction
@@ -59,7 +57,7 @@ module RailsSpotlight
             logs: logs,
             error: error.present? ? error.inspect : nil,
             query_mode: force_execution? ? 'force' : 'default',
-            project: ::RailsSpotlight::Support::Project.instance.name
+            project: ::RailsSpotlight.config.project_name
           }
         end
 

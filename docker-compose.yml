@@ -5,10 +5,6 @@ services:
      - 'docker-variables.env'
     build: .
     command: bundle exec rubocop
-  spec-unit:
-    env_file:
-     - 'docker-variables.env'
-    build: .
   spec-rails-5.2:
     env_file:
      - 'docker-variables.env'

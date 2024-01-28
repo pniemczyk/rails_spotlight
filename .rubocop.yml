@@ -10,6 +10,7 @@ AllCops:
     - "exe/**/*"
     - "tmp/**/*"
     - "extensions/**/*"
+    - "spec/**/*"
 
 Style/StringLiterals:
   Enabled: true

@@ -6,8 +6,10 @@
 /pkg/
 /spec/reports/
 /tmp/
+/log/
 /extensions/
 /services/
+/spec/fixtures/test.sqlite3
 
 # rspec failure tracking
 .rspec_status

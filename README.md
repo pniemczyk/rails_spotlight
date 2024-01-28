@@ -19,10 +19,30 @@ end
 
 ## Configuration
 
-environment variables
+Generate configuration file by running:
 
+```bash
+rails rails_spotlight:generate_config 
 ```
-RAILS_SPOTLIGHT_PROJECT=MyProjectName
+
+file will be created in `config/rails_spotlight.yml`
+
+### Configuration options
+
+```yaml
+  # Default configuration for RailsSpotlight
+  PROJECT_NAME: <%=Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name%>
+  SOURCE_PATH: <%=Rails.root%>
+  STORAGE_PATH: <%=Rails.root.join('tmp', 'data', 'rails_spotlight')%>
+  STORAGE_POOL_SIZE: 20
+  LOGGER: <%=Logger.new(Rails.root.join('log', 'rails_spotlight.log'))%>
+  MIDDLEWARE_SKIPPED_PATHS: []
+  NOT_ENCODABLE_EVENT_VALUES:
+  # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
+  LIVE_CONSOLE_ENABLED: true
+  REQUEST_COMPLETED_BROADCAST_ENABLED: false
+  AUTO_MOUNT_ACTION_CABLE: true
+  ACTION_CABLE_MOUNT_PATH: /cable
 ```
 
 ## Testing

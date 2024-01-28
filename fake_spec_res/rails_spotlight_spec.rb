@@ -21,7 +21,7 @@ RSpec.describe DummyController, type: :request do # rubocop:disable Metrics/Bloc
       post '/__rails_spotlight/file.json', params: { file: file, mode: :write, content: content }.to_json
 
       expect(response).to be_successful
-      expect(response.body).to eq({ source: content }.to_json)
+      expect(response.body).to eq({ source: content, changed: true, project: 'App', new_content: 'TEST' }.to_json)
       expect(File.read(Rails.root.join(file))).to eq content
     end
 
@@ -33,14 +33,14 @@ RSpec.describe DummyController, type: :request do # rubocop:disable Metrics/Bloc
     it 'serve a sql result' do
       post '/__rails_spotlight/sql.json', params: { query: 'select sqlite_version();' }.to_json
       expect(response).to be_successful
-      expect(JSON.parse(response.body).keys).to eq(%w[result logs])
+      expect(JSON.parse(response.body).keys).to eq(%w[query result logs error query_mode project])
     end
   end
 
-  context 'meta_request specs' do
+  context 'meta request specs' do
     before do
       # clean up meta_request files
-      FileUtils.rm_rf(Rails.root.join('tmp', 'data', 'meta_request'))
+      FileUtils.rm_rf(Rails.root.join('tmp', 'data', 'rails_spotlight'))
       get '/'
       @request_id = response.headers['X-Request-Id']
     end
@@ -52,15 +52,15 @@ RSpec.describe DummyController, type: :request do # rubocop:disable Metrics/Bloc
     end
 
     it 'should have a meta_request version header' do
-      expect(response.headers['X-Meta-Request-Version']).to eq(MetaRequest::VERSION)
+      expect(response.headers['X-Rails-Spotlight-Version']).to eq(RailsSpotlight::VERSION)
     end
 
     it 'should create a request file' do
-      expect(Dir[Rails.root.join('tmp/data/meta_request/*.json')].size).to eq(1)
+      expect(Dir[Rails.root.join('tmp/data/rails_spotlight/*.json')].size).to eq(1)
     end
 
-    it 'should serve a meta_request' do
-      get "/__meta_request/#{request_id}.json"
+    it 'should serve a meta request' do
+      get "/__rails_spotlight/meta.json?id=#{request_id}"
       expect(response).to be_successful
     end
   end
