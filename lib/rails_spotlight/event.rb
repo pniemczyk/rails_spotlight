@@ -63,30 +63,14 @@ module RailsSpotlight
     end
 
     def transform_hash(original, options = {}, &block)
-      # options[:safe_descent] ||= {}
-      # new_hash = {}
-      # options[:safe_descent][original.object_id] = new_hash
-      # original.each_with_object(new_hash) do |(key, value), result|
-      #   if options[:deep] && Hash === value
-      #     value = options[:safe_descent].fetch(value.object_id) do
-      #       transform_hash(value, options, &block)
-      #     end
-      #   end
-      #   block.call(result, key, value)
-      # end
-
-      # Initialize safe_descent hash to keep track of hashes already transformed.
-      # options[:safe_descent] ||= {}
       options[:safe_descent] ||= {}.compare_by_identity
 
       # Check if the hash has already been transformed to prevent infinite recursion.
-      # return options[:safe_descent][original.object_id] if options[:safe_descent].key?(original.object_id)
       return options[:safe_descent][original] if options[:safe_descent].key?(original)
 
       # Create a new hash to store the transformed values.
       new_hash = {}
       # Store the new hash in safe_descent using the original's object_id to mark it as processed.
-      # options[:safe_descent][original.object_id] = new_hash
       options[:safe_descent][original] = new_hash
 
       # Iterate over each key-value pair in the original hash.
@@ -94,7 +78,6 @@ module RailsSpotlight
         # If deep transformation is required and the value is a hash,
         # recursively transform it, unless it's already been transformed.
         if options[:deep] && Hash === value # rubocop:disable Style/CaseEquality
-          # value = options[:safe_descent].fetch(value.object_id) do
           value = options[:safe_descent].fetch(value) do
             transform_hash(value, options, &block)
           end
