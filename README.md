@@ -45,6 +45,18 @@ file will be created in `config/rails_spotlight.yml`
   ACTION_CABLE_MOUNT_PATH: /cable
 ```
 
+## Troubleshooting
+
+Known issue:
+
+Authentication error when using: 
+  - Specific authentication method and action cable
+  - AUTO_MOUNT_ACTION_CABLE: true
+
+Solution:
+  - Set AUTO_MOUNT_ACTION_CABLE: false
+  - Add manually `mount ActionCable.server => '/cable'` to `config/routes.rb` with proper authentication method
+
 ## Testing
 
 To run tests for all versions of Rails and Ruby, run:
