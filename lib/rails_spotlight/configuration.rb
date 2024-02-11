@@ -19,11 +19,11 @@ module RailsSpotlight
       @logger = opts[:logger] || Logger.new(File.join(self.class.rails_root, 'log', 'rails_spotlight.log'))
       @storage_path = opts[:storage_path] || File.join(self.class.rails_root, 'tmp', 'data', 'rails_spotlight')
       @storage_pool_size = opts[:storage_pool_size] || 20
-      @live_console_enabled = opts[:live_console_enabled] || true
-      @request_completed_broadcast_enabled = opts[:request_completed_broadcast_enabled] || false
+      @live_console_enabled = opts[:live_console_enabled].nil? ? true : is_true?(opts[:live_console_enabled])
+      @request_completed_broadcast_enabled = is_true?(opts[:request_completed_broadcast_enabled])
       @middleware_skipped_paths = opts[:middleware_skipped_paths] || []
       @not_encodable_event_values = DEFAULT_NOT_ENCODABLE_EVENT_VALUES.merge(opts[:not_encodable_event_values] || {})
-      @auto_mount_action_cable = opts[:auto_mount_action_cable] || true
+      @auto_mount_action_cable = opts[:auto_mount_action_cable].nil? ? true : is_true?(opts[:auto_mount_action_cable])
       @action_cable_mount_path = opts[:action_cable_mount_path] || '/cable'
     end
 
@@ -54,9 +54,10 @@ module RailsSpotlight
       return new unless File.exist?(config_file)
 
       erb_result = ERB.new(File.read(config_file)).result
-      config = YAML.safe_load(erb_result) || {}
+      data = YAML.safe_load(erb_result) || {}
+
       # Support older versions of Ruby and Rails
-      opts = config.each_with_object({}) do |(key, value), memo|
+      opts = data.each_with_object({}) do |(key, value), memo|
         new_key = key.is_a?(String) ? key.downcase.to_sym : key
         memo[new_key] = value
       end
@@ -73,6 +74,10 @@ module RailsSpotlight
     end
 
     private
+
+    def is_true?(value)
+      value == true || value == 'true' || value == 1 || value == '1'
+    end
 
     def detect_project_name
       return ENV['RAILS_SPOTLIGHT_PROJECT'] if ENV['RAILS_SPOTLIGHT_PROJECT'].present?
