@@ -57,6 +57,14 @@ Solution:
   - Set AUTO_MOUNT_ACTION_CABLE: false
   - Add manually `mount ActionCable.server => '/cable'` to `config/routes.rb` with proper authentication method
 
+---
+
+Requests crash when **ActionCable settings** -> **Use action cable for meta requests (required for Safari)**  is on
+
+Solution:
+  - Switch flag off
+  - REQUEST_COMPLETED_BROADCAST_ENABLED: false
+
 ## Testing
 
 To run tests for all versions of Rails and Ruby, run:
