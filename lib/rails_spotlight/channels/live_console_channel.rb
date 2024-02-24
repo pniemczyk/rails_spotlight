@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative '../rails_command_executor'
 module RailsSpotlight
   module Channels
     class LiveConsoleChannel < ActionCable::Channel::Base
@@ -18,7 +19,7 @@ module RailsSpotlight
         for_project = data['project']
         return publish({ error: project_mismatch_message(for_project) }) if for_project.present? && for_project != project
 
-        output = execute_command(command, { inspect_types: inspect_types })
+        output = execute_command(command, inspect_types)
         publish(output)
       end
 
@@ -37,54 +38,24 @@ module RailsSpotlight
         ::RailsSpotlight.config.project_name
       end
 
-      def execute_command(command, opts = {})
-        output_stream = StringIO.new # Create a new StringIO object to capture output
-        inspect_types = opts[:inspect_types]
-        result = nil
+      def executor
+        @executor ||= ::RailsSpotlight::RailsCommandExecutor.new
+      end
 
-        begin
-          original_stdout = $stdout
-          $stdout = output_stream
-          result = eval(command) # rubocop:disable Security/Eval
-        ensure
-          $stdout = original_stdout
-        end
+      def execute_command(command, inspect_types)
+        RailsSpotlight.config.logger && RailsSpotlight.config.logger.info("Executing command: #{command}") # rubocop:disable Style/SafeNavigation
 
-        # result = eval(command)
-        {
-          result: {
-            inspect: result.inspect,
-            raw: result,
-            type: result.class.name,
-            types: result_inspect_types(inspect_types, result),
-            console: output_stream.string
+        executor.execute(command)
+        if executor.execution_successful?
+          {
+            result: executor.result_as_json(inspect_types: inspect_types),
+            project: ::RailsSpotlight.config.project_name
           }
-        }
-      rescue StandardError => e
-        { error: e.message }
-      end
-
-      def result_inspect_types(inspect_types, result)
-        return {} unless inspect_types
-
-        {
-          root: result.class.name,
-          items: result_types_items(result)
-        }
-      end
-
-      def result_types_items(result)
-        case result
-        when Array
-          # Create a hash with indices as keys and class names as values
-          result.each_with_index.to_h { |element, index| [index.to_s, element.class.name] }
-        when Hash
-          # Create a hash with string keys and class names as values
-          result.transform_keys(&:to_s).transform_values { |value| value.class.name }
         else
-          # For non-collection types, there are no items
-          {}
+          executor.result_as_json
         end
+      rescue => e # rubocop:disable Style/RescueStandardError
+        { error: e.message }
       end
     end
   end

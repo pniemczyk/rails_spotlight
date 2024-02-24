@@ -23,7 +23,7 @@ RSpec.describe RailsSpotlight::Channels::LiveConsoleChannel, type: :channel do
         expect(output).to include('result')
         expect(output['project']).to eq('FakeApp')
         result = output['result']
-        expect(result.keys).to match_array(%w[inspect raw type types console])
+        expect(result.keys).to match_array(%w[inspect raw type types console status])
         expect(result['inspect']).to eq('4')
         expect(result['raw']).to eq(4)
         expect(result['type']).to eq('Integer')

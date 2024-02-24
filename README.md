@@ -41,8 +41,10 @@ file will be created in `config/rails_spotlight.yml`
   # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
   LIVE_CONSOLE_ENABLED: true
   REQUEST_COMPLETED_BROADCAST_ENABLED: false
-  AUTO_MOUNT_ACTION_CABLE: true
+  AUTO_MOUNT_ACTION_CABLE: false
   ACTION_CABLE_MOUNT_PATH: /cable
+  BLOCK_EDITING_FILES: false
+  BLOCK_EDITING_FILES_OUTSIDE_OF_THE_PROJECT: true
 ```
 
 ## Troubleshooting

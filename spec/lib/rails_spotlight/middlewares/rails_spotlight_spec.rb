@@ -18,6 +18,7 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
       end
 
       it 'as write mode returns response correctly' do
+        expect(::RailsSpotlight.config).to receive(:block_editing_files).and_return(false)
         body = { file: 'spec/fixtures/test.txt', mode: 'write', content: 'change the text' }.to_json
         expect(File).to receive(:write).with(Rails.root.join('spec/fixtures/test.txt').to_s, 'change the text')
         post '/__rails_spotlight/file.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
@@ -28,6 +29,24 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
         expect(json_response['changed']).to eq(true)
         expect(json_response['new_content']).to eq("change the text")
       end
+
+      it 'as write mode returns return unprocessed when editing file is blocked' do
+        expect(::RailsSpotlight.config).to receive(:block_editing_files).and_return(true)
+        body = { file: 'spec/fixtures/test.txt', mode: 'write', content: 'change the text' }.to_json
+        post '/__rails_spotlight/file.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
+        expect(response).to_not be_successful
+      end
+
+      it 'as write mode returns return unprocessed when editing file outside project is blocked is blocked' do
+        expect(::RailsSpotlight.config).to receive(:block_editing_files).and_return(false)
+        expect(::RailsSpotlight.config).to receive(:block_editing_files_outside_of_the_project)
+        expect(File).to receive(:exist?).at_least(:once) do |args|
+          args == '/User/spec/fixtures/test.txt'
+        end
+        body = { file: '/User/spec/fixtures/test.txt', mode: 'write', content: 'change the text' }.to_json
+        post '/__rails_spotlight/file.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
+        expect(response).to_not be_successful
+      end
     end
 
     context 'when requesting a verify action' do
@@ -37,7 +56,7 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
         expect(response).to be_successful
         json_response = JSON.parse(response.body)
         expect(json_response['project']).to eq("FakeApp")
-        expect(json_response['current_gem_version']).to eq("0.2.0")
+        expect(json_response['current_gem_version']).to eq(RailsSpotlight::VERSION)
         expect(json_response['version']).to eq("1.0.0")
         expect(json_response['request_method']).to eq("POST")
         expect(json_response['content_type']).to eq("application/json")

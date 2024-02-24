@@ -2,7 +2,7 @@
 
 require 'rake'
 
-namespace :rails_spotlight do
+namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
   desc 'Generate rails_spotlight configuration file'
   task generate_config: :environment do
     require 'fileutils'
@@ -21,8 +21,10 @@ namespace :rails_spotlight do
       # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
       LIVE_CONSOLE_ENABLED: true
       REQUEST_COMPLETED_BROADCAST_ENABLED: false
-      AUTO_MOUNT_ACTION_CABLE: true
+      AUTO_MOUNT_ACTION_CABLE: false
       ACTION_CABLE_MOUNT_PATH: /cable
+      BLOCK_EDITING_FILES: false
+      BLOCK_EDITING_FILES_OUTSIDE_OF_THE_PROJECT: true
     YAML
 
     if File.exist?(config_path)

@@ -11,20 +11,23 @@ module RailsSpotlight
     }.freeze
 
     attr_reader :project_name, :source_path, :logger, :storage_path, :storage_pool_size, :middleware_skipped_paths,
-                :not_encodable_event_values, :action_cable_mount_path
+                :not_encodable_event_values, :action_cable_mount_path,
+                :block_editing_files, :block_editing_files_outside_of_the_project
 
-    def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
       @project_name = opts[:project_name] || detect_project_name
       @source_path = opts[:source_path] || self.class.rails_root
       @logger = opts[:logger] || Logger.new(File.join(self.class.rails_root, 'log', 'rails_spotlight.log'))
       @storage_path = opts[:storage_path] || File.join(self.class.rails_root, 'tmp', 'data', 'rails_spotlight')
       @storage_pool_size = opts[:storage_pool_size] || 20
-      @live_console_enabled = opts[:live_console_enabled].nil? ? true : is_true?(opts[:live_console_enabled])
-      @request_completed_broadcast_enabled = is_true?(opts[:request_completed_broadcast_enabled])
+      @live_console_enabled = opts[:live_console_enabled].nil? ? true : true?(opts[:live_console_enabled])
+      @request_completed_broadcast_enabled = true?(opts[:request_completed_broadcast_enabled])
       @middleware_skipped_paths = opts[:middleware_skipped_paths] || []
       @not_encodable_event_values = DEFAULT_NOT_ENCODABLE_EVENT_VALUES.merge(opts[:not_encodable_event_values] || {})
-      @auto_mount_action_cable = opts[:auto_mount_action_cable].nil? ? true : is_true?(opts[:auto_mount_action_cable])
+      @auto_mount_action_cable = opts[:auto_mount_action_cable].nil? ? true : true?(opts[:auto_mount_action_cable])
       @action_cable_mount_path = opts[:action_cable_mount_path] || '/cable'
+      @block_editing_files = opts[:block_editing_files].nil? ? true : true?(opts[:block_editing_files])
+      @block_editing_files_outside_of_the_project = opts[:block_editing_files_outside_of_the_project].nil? ? false : true?(opts[:block_editing_files_outside_of_the_project])
     end
 
     def live_console_enabled
@@ -75,8 +78,8 @@ module RailsSpotlight
 
     private
 
-    def is_true?(value)
-      value == true || value == 'true' || value == 1 || value == '1'
+    def true?(value)
+      [true, 'true', 1, '1'].include?(value)
     end
 
     def detect_project_name

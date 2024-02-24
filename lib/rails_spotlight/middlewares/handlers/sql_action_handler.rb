@@ -16,11 +16,10 @@ module RailsSpotlight
         private
 
         def validate_project!
-          Rails.logger.warn required_projects
           return if required_projects.blank?
           return if required_projects.include?(::RailsSpotlight.config.project_name)
 
-          raise UnprocessableEntity, "Check your connetction settings the current query is not allowed to be executed on the #{::RailsSpotlight.config.project_name} project"
+          raise UnprocessableEntity, "Check your connection settings the current query is not allowed to be executed on the #{::RailsSpotlight.config.project_name} project"
         end
 
         def transaction
@@ -37,7 +36,8 @@ module RailsSpotlight
           end
         end
 
-        def run
+        def run # rubocop:disable Metrics/AbcSize
+          RailsSpotlight.config.logger && RailsSpotlight.config.logger.info("Executing query: #{query}") # rubocop:disable Style/SafeNavigation
           return self.result = ActiveRecord::Base.connection.exec_query(query) if connection_options.blank? || !ActiveRecord::Base.respond_to?(:connects_to)
 
           connections = ActiveRecord::Base.connects_to(**connection_options)
