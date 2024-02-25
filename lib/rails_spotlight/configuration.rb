@@ -20,14 +20,14 @@ module RailsSpotlight
       @logger = opts[:logger] || Logger.new(File.join(self.class.rails_root, 'log', 'rails_spotlight.log'))
       @storage_path = opts[:storage_path] || File.join(self.class.rails_root, 'tmp', 'data', 'rails_spotlight')
       @storage_pool_size = opts[:storage_pool_size] || 20
-      @live_console_enabled = opts[:live_console_enabled].nil? ? true : true?(opts[:live_console_enabled])
-      @request_completed_broadcast_enabled = true?(opts[:request_completed_broadcast_enabled])
+      @live_console_enabled = opts[:live_console_enabled].nil? ? false : true?(opts[:live_console_enabled])
+      @request_completed_broadcast_enabled = opts[:request_completed_broadcast_enabled].nil? ? false : true?(opts[:request_completed_broadcast_enabled])
       @middleware_skipped_paths = opts[:middleware_skipped_paths] || []
       @not_encodable_event_values = DEFAULT_NOT_ENCODABLE_EVENT_VALUES.merge(opts[:not_encodable_event_values] || {})
-      @auto_mount_action_cable = opts[:auto_mount_action_cable].nil? ? true : true?(opts[:auto_mount_action_cable])
+      @auto_mount_action_cable = opts[:auto_mount_action_cable].nil? ? false : true?(opts[:auto_mount_action_cable])
       @action_cable_mount_path = opts[:action_cable_mount_path] || '/cable'
-      @block_editing_files = opts[:block_editing_files].nil? ? true : true?(opts[:block_editing_files])
-      @block_editing_files_outside_of_the_project = opts[:block_editing_files_outside_of_the_project].nil? ? false : true?(opts[:block_editing_files_outside_of_the_project])
+      @block_editing_files = opts[:block_editing_files].nil? ? false : true?(opts[:block_editing_files])
+      @block_editing_files_outside_of_the_project = opts[:block_editing_files_outside_of_the_project].nil? ? true : true?(opts[:block_editing_files_outside_of_the_project])
     end
 
     def live_console_enabled

@@ -39,7 +39,9 @@ file will be created in `config/rails_spotlight.yml`
   MIDDLEWARE_SKIPPED_PATHS: []
   NOT_ENCODABLE_EVENT_VALUES:
   # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
-  LIVE_CONSOLE_ENABLED: true
+  # LIVE_CONSOLE_ENABLED from version 0.2.3 do not require ActionCable to be enabled.
+  LIVE_CONSOLE_ENABLED: false
+  # Experimental feature.
   REQUEST_COMPLETED_BROADCAST_ENABLED: false
   AUTO_MOUNT_ACTION_CABLE: false
   ACTION_CABLE_MOUNT_PATH: /cable
