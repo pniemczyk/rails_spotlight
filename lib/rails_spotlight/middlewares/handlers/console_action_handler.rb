@@ -38,8 +38,14 @@ module RailsSpotlight
         end
 
         def json_response_body
-          executor.result_as_json(inspect_types: inspect_types)
-                  .merge(project: ::RailsSpotlight.config.project_name)
+          if executor.execution_successful?
+            {
+              result: executor.result_as_json(inspect_types: inspect_types),
+              project: ::RailsSpotlight.config.project_name
+            }
+          else
+            executor.result_as_json.merge(project: ::RailsSpotlight.config.project_name)
+          end
         end
       end
     end

@@ -52,7 +52,7 @@ module RailsSpotlight
             project: ::RailsSpotlight.config.project_name
           }
         else
-          executor.result_as_json
+          executor.result_as_json.merge(project: ::RailsSpotlight.config.project_name)
         end
       rescue => e # rubocop:disable Style/RescueStandardError
         { error: e.message }
