@@ -38,6 +38,7 @@ file will be created in `config/rails_spotlight.yml`
   LOGGER: <%=Logger.new(Rails.root.join('log', 'rails_spotlight.log'))%>
   MIDDLEWARE_SKIPPED_PATHS: []
   NOT_ENCODABLE_EVENT_VALUES:
+  SKIP_RENDERED_IVARS: []
   # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
   # LIVE_CONSOLE_ENABLED from version 0.2.3 do not require ActionCable to be enabled.
   LIVE_CONSOLE_ENABLED: false
@@ -47,6 +48,16 @@ file will be created in `config/rails_spotlight.yml`
   ACTION_CABLE_MOUNT_PATH: /cable
   BLOCK_EDITING_FILES: false
   BLOCK_EDITING_FILES_OUTSIDE_OF_THE_PROJECT: true
+```
+
+## Additional metrics
+
+To enable additional rendering metrics like local variables, instance variables, params etc. add to your layout file:
+
+```erb
+<% if Rails.env.development? %>
+  <%= RailsSpotlight::RenderViewReporter.report_rendered_view_locals(self, locals: local_assigns, params: params, skip_vars: %i[current_template], metadata: { just_test: 'Works' }) %>
+<% end %>
 ```
 
 ## Troubleshooting

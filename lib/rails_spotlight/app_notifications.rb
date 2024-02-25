@@ -31,6 +31,11 @@ module RailsSpotlight
       Event.new(name, start, ending, transaction_id, payload)
     }
 
+    VIEW_LOCALS_BLOCK = proc { |*args|
+      name, start, ending, transaction_id, payload = args
+      Event.new(name, start, ending, transaction_id, payload)
+    }
+
     # sql processing block - used for sql.active_record and sql.sequel
 
     # HACK: we hardcode the event name to 'sql.active_record' so that the ui will
@@ -75,6 +80,14 @@ module RailsSpotlight
         .subscribe('cache_write.active_support', &CACHE_BLOCK)
         .subscribe('cache_delete.active_support', &CACHE_BLOCK)
         .subscribe('cache_exist?.active_support', &CACHE_BLOCK)
+        .subscribe('render_view.locals', &VIEW_LOCALS_BLOCK)
+
+      # TODO: Consider adding these events
+      # start_processing.action_controller: Triggered when a controller action starts processing a request.
+      # send_file.action_controller: Triggered when a file is sent as a response.
+      # redirect_to.action_controller: Triggered when a redirect response is sent.
+      # halted_callback.action_controller: Triggered when a filter or callback halts the request.
+      # render_collection.action_view: This event is triggered when a collection is rendered using a partial. It includes details about the collection being rendered, such as the collection name and the partial being used to render each item.
     end
 
     def subscribe(event_name)

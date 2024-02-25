@@ -10,9 +10,29 @@ module RailsSpotlight
       'ActionDispatch' => ['ActionDispatch::Request', 'ActionDispatch::Response']
     }.freeze
 
+    SKIP_RENDERED_IVARS = %i[
+      @_routes
+      @_config
+      @view_renderer
+      @lookup_context
+      @_assigns
+      @_controller
+      @_request
+      @_default_form_builder
+      @view_flow
+      @output_buffer
+      @virtual_path
+      @tag_builder
+      @assets_environment
+      @asset_resolver_strategies
+      @_main_app
+      @_devise_route_context
+      @devise_mapping
+    ].freeze
+
     attr_reader :project_name, :source_path, :logger, :storage_path, :storage_pool_size, :middleware_skipped_paths,
                 :not_encodable_event_values, :action_cable_mount_path,
-                :block_editing_files, :block_editing_files_outside_of_the_project
+                :block_editing_files, :block_editing_files_outside_of_the_project, :skip_rendered_ivars
 
     def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
       @project_name = opts[:project_name] || detect_project_name
@@ -28,6 +48,7 @@ module RailsSpotlight
       @action_cable_mount_path = opts[:action_cable_mount_path] || '/cable'
       @block_editing_files = opts[:block_editing_files].nil? ? false : true?(opts[:block_editing_files])
       @block_editing_files_outside_of_the_project = opts[:block_editing_files_outside_of_the_project].nil? ? true : true?(opts[:block_editing_files_outside_of_the_project])
+      @skip_rendered_ivars = SKIP_RENDERED_IVARS + (opts[:skip_rendered_ivars] || []).map(&:to_sym)
     end
 
     def live_console_enabled

@@ -18,6 +18,7 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
       LOGGER: <%=Logger.new(Rails.root.join('log', 'rails_spotlight.log'))%>
       MIDDLEWARE_SKIPPED_PATHS: []
       NOT_ENCODABLE_EVENT_VALUES:
+      SKIP_RENDERED_IVARS: []
       # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
       # LIVE_CONSOLE_ENABLED from version 0.2.3 do not require ActionCable to be enabled.
       LIVE_CONSOLE_ENABLED: false
