@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails/railtie'
+require_relative 'log_interceptor'
 
 module RailsSpotlight
   class Railtie < ::Rails::Railtie
@@ -9,7 +10,10 @@ module RailsSpotlight
     end
 
     initializer 'rails_spotlight.log_interceptor' do
-      Rails.logger&.extend(LogInterceptor) unless Rails.env.production?
+      unless Rails.env.production?
+        Rails.logger&.extend(LogInterceptor)
+        defined?(Sidekiq::Logger) && Sidekiq.logger&.extend(LogInterceptor)
+      end
     end
 
     initializer 'rails_spotlight.subscribe_to_notifications' do
@@ -26,8 +30,7 @@ module RailsSpotlight
       app.config.after_initialize do
         update_actioncable_allowed_request_origins!
 
-        require 'rails_spotlight/channels/request_completed_channel' if ::RailsSpotlight.config.request_completed_broadcast_enabled?
-        require 'rails_spotlight/channels/live_console_channel' if ::RailsSpotlight.config.live_console_enabled?
+        require 'rails_spotlight/channels/spotlight_channel' if ::RailsSpotlight.config.request_completed_broadcast_enabled?
 
         app.routes.draw { mount ActionCable.server => '/cable' } if ::RailsSpotlight.config.auto_mount_action_cable?
       end
@@ -51,7 +54,12 @@ module RailsSpotlight
 
       return unless ::RailsSpotlight.config.request_completed_broadcast_enabled?
 
-      app.middleware.insert_after ::RailsSpotlight::Middlewares::HeaderMarker, RailsSpotlight::Middlewares::RequestCompleted, app.config
+      # app.middleware.insert_after ::RailsSpotlight::Middlewares::HeaderMarker, RailsSpotlight::Middlewares::RequestCompleted, app.config
+      if defined? ActionDispatch::Executor
+        app.middleware.insert_after ActionDispatch::Executor, ::RailsSpotlight::Middlewares::RequestCompleted, app.config
+      else
+        app.middleware.use ::RailsSpotlight::Middlewares::RequestCompleted
+      end
     end
 
     def app

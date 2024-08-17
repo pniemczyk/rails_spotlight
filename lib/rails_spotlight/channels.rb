@@ -2,7 +2,7 @@
 
 module RailsSpotlight
   module Channels
-    autoload(:LiveConsoleChannel, 'rails_spotlight/channels/live_console_channel') if defined?(ActionCable)
-    autoload(:RequestCompletedChannel, 'rails_spotlight/channels/request_completed_channel') if defined?(ActionCable)
+    SPOTLIGHT_CHANNEL = 'RailsSpotlight::Channels::SpotlightChannel'.freeze
+    autoload(:SpotlightChannel, 'rails_spotlight/channels/spotlight_channel') if defined?(ActionCable)
   end
 end

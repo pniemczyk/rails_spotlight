@@ -23,14 +23,16 @@ module RailsSpotlight
         end
 
         def new_content
-          json_request_body.fetch('content')
+          body_fetch('content')
         end
 
         def json_response_body
           {
             source: text_response_body,
             changed: write_mode?,
-            project: ::RailsSpotlight.config.project_name
+            in_project: file_in_project?,
+            relative_path: Pathname.new(file_path).relative_path_from(::RailsSpotlight.config.rails_root).to_s,
+            root_path: ::RailsSpotlight.config.rails_root
           }.merge(write_mode? ? { new_content: new_content } : {})
         end
 
@@ -55,7 +57,7 @@ module RailsSpotlight
         end
 
         def request_mode
-          @request_mode ||= json_request_body.fetch('mode', 'read')
+          @request_mode ||= body_fetch('mode', 'read')
         end
 
         def path_valid?
@@ -67,13 +69,17 @@ module RailsSpotlight
                            original_file_path
                          elsif file_in_project?
                            File.join(::RailsSpotlight.config.rails_root, original_file_path)
+                         elsif file_in_project_app_dir?
+                           File.join(::RailsSpotlight.config.rails_root, 'app', original_file_path)
+                         elsif file_in_project_views_dir?
+                           File.join(::RailsSpotlight.config.rails_root, 'app', 'views', original_file_path)
                          else # rubocop:disable Lint/DuplicateBranch
                            original_file_path
                          end
         end
 
         def original_file_path
-          @original_file_path ||= json_request_body.fetch('file')
+          @original_file_path ||= body_fetch('file')
         end
 
         def path_file_in_project?
@@ -82,6 +88,14 @@ module RailsSpotlight
 
         def file_in_project?
           File.exist?(File.join(::RailsSpotlight.config.rails_root, original_file_path))
+        end
+
+        def file_in_project_app_dir?
+          File.exist?(File.join(::RailsSpotlight.config.rails_root, 'app', original_file_path))
+        end
+
+        def file_in_project_views_dir?
+          File.exist?(File.join(::RailsSpotlight.config.rails_root, 'app', 'views', original_file_path))
         end
 
         def file_outside_project?

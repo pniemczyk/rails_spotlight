@@ -87,7 +87,9 @@ module RailsSpotlight
       # send_file.action_controller: Triggered when a file is sent as a response.
       # redirect_to.action_controller: Triggered when a redirect response is sent.
       # halted_callback.action_controller: Triggered when a filter or callback halts the request.
-      # render_collection.action_view: This event is triggered when a collection is rendered using a partial. It includes details about the collection being rendered, such as the collection name and the partial being used to render each item.
+      # render_collection.action_view: This event is triggered when a collection is rendered using a partial.
+      #                                It includes details about the collection being rendered,
+      #                                such as the collection name and the partial being used to render each item.
     end
 
     def subscribe(event_name)

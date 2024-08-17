@@ -15,6 +15,9 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
         expect(json_response['source']).to eq("Test content\n")
         expect(json_response['project']).to eq("FakeApp")
         expect(json_response['changed']).to eq(false)
+        expect(json_response['in_project']).to be_truthy
+        expect(json_response['relative_path']).to eq('spec/fixtures/test.txt')
+        expect(json_response['root_path']).to eq(Rails.root.to_s)
       end
 
       it 'as write mode returns response correctly' do
@@ -28,6 +31,9 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
         expect(json_response['project']).to eq("FakeApp")
         expect(json_response['changed']).to eq(true)
         expect(json_response['new_content']).to eq("change the text")
+        expect(json_response['in_project']).to be_truthy
+        expect(json_response['relative_path']).to eq('spec/fixtures/test.txt')
+        expect(json_response['root_path']).to eq(Rails.root.to_s)
       end
 
       it 'as write mode returns return unprocessed when editing file is blocked' do
@@ -49,6 +55,30 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
       end
     end
 
+    context 'when requesting a directory index action' do
+      it 'returns response correctly' do
+        body = {
+          ignore: RailsSpotlight::Configuration::DEFAULT_DIRECTORY_INDEX_IGNORE + %w[.gitignore .bundle /tmp /extensions],
+          omnit_gitignore: false,
+          show_empty_directories: false
+        }.to_json
+        post '/__rails_spotlight/directory_index.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
+        expect(response).to be_successful
+        json_response = JSON.parse(response.body)
+        expect(json_response['project']).to eq("FakeApp")
+        expect(json_response['root_path']).to eq(Rails.root.to_s)
+        root_dir = json_response['result']
+        expect(root_dir['path']).to eq('.')
+        expect(root_dir['name']).to eq('rails_spotlight')
+        expect(root_dir['dir']).to be_truthy
+        expect(root_dir['children'].count).to be > 0
+        readme_file = root_dir['children'].find { |child| child['name'] == 'README.md' }
+        expect(readme_file).to_not be_nil
+        expect(readme_file['dir']).to be_falsey
+        expect(readme_file['children']).to be_empty
+      end
+    end
+
     context 'when requesting a verify action' do
       it 'returns response correctly' do
         body = { test: 'ok' }.to_json
@@ -63,6 +93,9 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
         expect(json_response['body']).to eq("{\"test\":\"ok\"}")
         expect(json_response['params']).to eq({"check"=>"yes"})
         expect(json_response['action_cable_path']).to be_nil
+        expect(json_response['current_gem_version']).to eq(RailsSpotlight::VERSION)
+        expect(json_response['version']).to eq('1.0.0')
+        expect(json_response['for_projects']).to eq([])
       end
     end
 

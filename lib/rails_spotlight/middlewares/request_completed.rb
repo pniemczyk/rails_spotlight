@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'concerns/skip_request_paths'
+require_relative '../channels/spotlight_channel'
 
 module RailsSpotlight
   module Middlewares
@@ -13,6 +14,8 @@ module RailsSpotlight
       end
 
       def call(env)
+        return app.call(env) unless ::RailsSpotlight.config.request_completed_broadcast_enabled?
+
         if skip?(env['PATH_INFO']) || (env['HTTP_CONNECTION'] == 'Upgrade' && env['HTTP_UPGRADE'] == 'websocket')
           app.call(env)
         else
@@ -40,17 +43,18 @@ module RailsSpotlight
         request = ActionDispatch::Request.new(env)
 
         host, url = host_and_url(env)
-        ActionCable.server.broadcast(
-          'rails_spotlight_request_completed_channel',
+        RailsSpotlight::Channels::SpotlightChannel.broadcast(
           {
-            rails_spotlight_version: RailsSpotlight::VERSION,
-            id: rails_spotlight_request_id,
-            http_method: env['REQUEST_METHOD'],
-            host: host,
-            url: url,
-            format: request.format.symbol,
-            controller: request.path_parameters[:controller],
-            action: request.path_parameters[:action]
+            type: 'request_completed',
+            payload: {
+              id: rails_spotlight_request_id,
+              http_method: env['REQUEST_METHOD'],
+              host: host,
+              url: url,
+              format: request.format.symbol,
+              controller: request.path_parameters[:controller],
+              action: request.path_parameters[:action]
+            }
           }
         )
       end

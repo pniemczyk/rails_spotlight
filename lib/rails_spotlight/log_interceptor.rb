@@ -1,45 +1,53 @@
 # frozen_string_literal: true
 
+require_relative 'channels'
+
 module RailsSpotlight
   module LogInterceptor
-    def debug(message = nil, *args)
-      push_event(:debug, message)
-      super
-    end
+    SEVERITY = %w[debug info warn error fatal unknown].freeze
+    SEVERITY_MAP = { 0 => 'debug', 1 => 'info', 2 => 'warn', 3 => 'error', 4 => 'fatal', 5 => 'unknown' }.freeze
 
-    def info(message = nil, *args)
-      push_event(:info, message)
-      super
-    end
+    def add(severity, message = nil, progname = nil)
+      severity ||= 5
+      return true if @logdev.nil? || severity < level
 
-    def warn(message = nil, *args)
-      push_event(:warn, message)
-      super
-    end
+      progname = @progname if progname.nil?
 
-    def error(message = nil, *args)
-      push_event(:error, message)
-      super
-    end
+      if message.nil?
+        if block_given?
+          message = yield
+        else
+          message = progname
+          progname = @progname
+        end
+      end
+      return true if _skip_logging?(message)
 
-    def fatal(message = nil, *args)
-      push_event(:fatal, message)
-      super
-    end
-
-    def unknown(message = nil, *args)
-      push_event(:unknown, message)
-      super
+      _push_event(SEVERITY_MAP[severity], message, progname)
+      super(severity, message, progname) if defined?(super)
+      true
     end
 
     private
 
-    def push_event(level, message)
-      callsite = AppRequest.current && Utils.dev_callsite(caller.drop(1))
-      if callsite
-        payload = callsite.merge(message: message, level: level)
-        AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, payload)
-      end
+    def _skip_logging?(message)
+      return false unless ::RailsSpotlight.config.live_console_enabled?
+      return false unless message.is_a?(String)
+
+      message.include?(::RailsSpotlight::Channels::SPOTLIGHT_CHANNEL)
+    end
+
+    def _push_event(level, message, progname = nil)
+      callsite = Utils.dev_callsite(caller.drop(1))
+      name = progname.is_a?(String) || progname.is_a?(Symbol) ? progname : nil
+      AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, callsite.merge(message: message, level: level, progname: name)) if AppRequest.current && callsite
+
+      return unless ::RailsSpotlight.config.live_console_enabled?
+      return if message.blank?
+
+      id = AppRequest.current ? AppRequest.current.id : nil
+      payload = (callsite || {}).merge(msg: message, src: ENV['RS_SRC'] || ::RailsSpotlight.config.default_rs_src, l: level, dt: Time.now.to_f, id: id,  pg: name)
+      ::RailsSpotlight::Channels::SpotlightChannel.broadcast(type: 'logs', payload: payload)
     rescue StandardError => e
       RailsSpotlight.config.logger.fatal("#{e.message}\n #{e.backtrace.join("\n ")}")
     end

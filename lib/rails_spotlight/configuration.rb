@@ -10,6 +10,10 @@ module RailsSpotlight
       'ActionDispatch' => ['ActionDispatch::Request', 'ActionDispatch::Response']
     }.freeze
 
+    DEFAULT_DIRECTORY_INDEX_IGNORE = %w[
+      /.git **/*.lock **/.DS_Store /app/assets/images/** /app/assets/fonts/** /app/assets/builds/** **/.keep
+    ].freeze
+
     SKIP_RENDERED_IVARS = %i[
       @_routes
       @_config
@@ -32,7 +36,9 @@ module RailsSpotlight
 
     attr_reader :project_name, :source_path, :logger, :storage_path, :storage_pool_size, :middleware_skipped_paths,
                 :not_encodable_event_values, :action_cable_mount_path,
-                :block_editing_files, :block_editing_files_outside_of_the_project, :skip_rendered_ivars
+                :block_editing_files, :block_editing_files_outside_of_the_project, :skip_rendered_ivars,
+                :directory_index_ignore, :rubocop_config_path, :use_action_cable, :default_rs_src,
+                :form_js_execution_token
 
     def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
       @project_name = opts[:project_name] || detect_project_name
@@ -44,27 +50,38 @@ module RailsSpotlight
       @request_completed_broadcast_enabled = opts[:request_completed_broadcast_enabled].nil? ? false : true?(opts[:request_completed_broadcast_enabled])
       @middleware_skipped_paths = opts[:middleware_skipped_paths] || []
       @not_encodable_event_values = DEFAULT_NOT_ENCODABLE_EVENT_VALUES.merge(opts[:not_encodable_event_values] || {})
+      @use_action_cable = opts[:use_action_cable].nil? ? false : true?(opts[:use_action_cable])
       @auto_mount_action_cable = opts[:auto_mount_action_cable].nil? ? false : true?(opts[:auto_mount_action_cable])
       @action_cable_mount_path = opts[:action_cable_mount_path] || '/cable'
       @block_editing_files = opts[:block_editing_files].nil? ? false : true?(opts[:block_editing_files])
       @block_editing_files_outside_of_the_project = opts[:block_editing_files_outside_of_the_project].nil? ? true : true?(opts[:block_editing_files_outside_of_the_project])
       @skip_rendered_ivars = SKIP_RENDERED_IVARS + (opts[:skip_rendered_ivars] || []).map(&:to_sym)
+      @directory_index_ignore = opts[:directory_index_ignore] || DEFAULT_DIRECTORY_INDEX_IGNORE
+      @rubocop_config_path = opts[:rubocop_config_path] ? File.join(self.class.rails_root, opts[:rubocop_config_path]) : nil
+      @live_logs_enabled = opts[:live_logs_enabled].nil? ? false : true?(opts[:live_logs_enabled])
+      @default_rs_src = opts[:default_rs_src] || 'default'
+      @form_js_execution_token = opts[:form_js_execution_token] || Digest::MD5.hexdigest(detect_project_name)
     end
 
     def live_console_enabled
-      @live_console_enabled && action_cable_present?
+      @live_console_enabled && use_action_cable && action_cable_present?
+    end
+
+    def live_logs_enabled
+      @live_logs_enabled && use_action_cable && action_cable_present?
     end
 
     alias live_console_enabled? live_console_enabled
+    alias live_logs_enabled? live_logs_enabled
 
     def request_completed_broadcast_enabled
-      @request_completed_broadcast_enabled && action_cable_present?
+      @request_completed_broadcast_enabled && use_action_cable && action_cable_present?
     end
 
     alias request_completed_broadcast_enabled? request_completed_broadcast_enabled
 
     def auto_mount_action_cable
-      @auto_mount_action_cable && action_cable_present?
+      @auto_mount_action_cable && use_action_cable && action_cable_present?
     end
 
     alias auto_mount_action_cable? auto_mount_action_cable

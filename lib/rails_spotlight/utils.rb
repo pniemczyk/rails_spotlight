@@ -15,6 +15,8 @@ module RailsSpotlight
         line: line.to_i,
         method: method
       }
+    rescue
+      nil
     end
 
     def sub_source_path(path)

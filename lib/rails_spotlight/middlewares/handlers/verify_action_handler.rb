@@ -12,15 +12,19 @@ module RailsSpotlight
           "Rails Spotlight is working!\nRails version: #{Rails.version}\nRails environment: #{Rails.env}"
         end
 
+        def skip_project_validation?
+          true
+        end
+
         def json_response_body
           {
             params: request.params,
             body: request.body.read,
             content_type: request.content_type,
             request_method: request.request_method,
-            version: request.get_header('HTTP_X_RAILS_SPOTLIGHT'),
+            version: request_spotlight_version,
+            for_projects: request_for_projects,
             current_gem_version: ::RailsSpotlight::VERSION,
-            project: ::RailsSpotlight.config.project_name,
             action_cable_path: defined?(ActionCable) ? ActionCable&.server&.config&.mount_path : nil
           }
         end

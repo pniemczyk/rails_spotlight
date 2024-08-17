@@ -11,7 +11,6 @@ module RailsSpotlight
         def json_response_body
           {
             events: events,
-            project: ::RailsSpotlight.config.project_name,
             root_path: ::RailsSpotlight.config.rails_root
           }
         end

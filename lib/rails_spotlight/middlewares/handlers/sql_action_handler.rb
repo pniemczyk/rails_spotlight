@@ -5,7 +5,6 @@ module RailsSpotlight
     module Handlers
       class SqlActionHandler < BaseActionHandler
         def execute
-          validate_project!
           return transaction unless ActiveSupport.const_defined?('ExecutionContext')
 
           ActiveSupport::ExecutionContext.set(rails_spotlight: request_id) do
@@ -14,13 +13,6 @@ module RailsSpotlight
         end
 
         private
-
-        def validate_project!
-          return if required_projects.blank?
-          return if required_projects.include?(::RailsSpotlight.config.project_name)
-
-          raise UnprocessableEntity, "Check your connection settings the current query is not allowed to be executed on the #{::RailsSpotlight.config.project_name} project"
-        end
 
         def transaction
           ActiveRecord::Base.transaction do
@@ -56,8 +48,7 @@ module RailsSpotlight
             result: result,
             logs: logs,
             error: error.present? ? error.inspect : nil,
-            query_mode: force_execution? ? 'force' : 'default',
-            project: ::RailsSpotlight.config.project_name
+          query_mode: force_execution? ? 'force' : 'default'
           }
         end
 
@@ -72,15 +63,15 @@ module RailsSpotlight
         end
 
         def query
-          @query ||= json_request_body.fetch('query')
+          @query ||= body_fetch('query')
         end
 
         def raw_options
-          @raw_options ||= json_request_body.fetch('options', {}) || {}
+          @raw_options ||= body_fetch('options', {}) || {}
         end
 
-        def required_projects
-          @required_projects ||= raw_options.fetch('projects', [])
+        def mode
+          @mode ||= body_fetch('mode', 'default')
         end
 
         def use
@@ -95,7 +86,7 @@ module RailsSpotlight
         end
 
         def force_execution?
-          @force_execution ||= json_request_body['mode'] == 'force'
+          @force_execution ||= mode == 'force'
         end
       end
     end

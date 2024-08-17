@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module RailsSpotlight
   class RenderViewReporter
     def self.report_rendered_view_locals(view, locals: nil, params: nil, show_devise: false, skip_vars: [], metadata: {})
@@ -12,7 +14,7 @@ module RailsSpotlight
 
     def self.serialize_as_json(value)
       value.respond_to?(:as_json) ? value.as_json : nil
-    rescue => e
+    rescue => e # rubocop:disable Style/RescueStandardError
       {
         __serialization_error: e.message,
         __source: value.inspect
