@@ -1,6 +1,6 @@
 ## Privacy Policy for the Rails Spotlight Chrome Extension
 
-**Last Updated:** October 18, 2023
+**Last Updated:** Aug 18, 2024
 
 ### 1. Introduction
 
@@ -30,10 +30,14 @@ We do not sell or share your data with third parties for their promotional purpo
 
 We are committed to ensuring that your information is secure. To prevent unauthorized access or disclosure, we have put in place suitable physical, electronic, and managerial procedures to safeguard and secure the information we collect.
 
-### 7. Changes to This Privacy Policy
+### 7. Subscription and Refund Policy
+
+By purchasing a membership for Rails Spotlight, you gain access to advanced features and contribute to the ongoing development of the tool. Please note that all memberships are non-refundable. Once purchased, no refunds will be issued, so we encourage you to carefully consider your decision before completing the purchase. However, you can cancel your subscription at any time if you no longer wish to use the service. Cancellation will prevent any future charges, but it will not refund the current or past payments.
+
+### 8. Changes to This Privacy Policy
 
 We may update our Privacy Policy from time to time. Thus, we advise you to review this document periodically for any changes. We will notify you of any changes by posting the new Privacy Policy in this location. Changes are effective immediately after they are posted.
 
-### 8. Contact Us
+### 9. Contact Us
 
 If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us.
