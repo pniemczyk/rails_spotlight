@@ -85,8 +85,6 @@ modify yor `development.rb` file
 
 ```ruby
 config.action_cable.allowed_request_origins = ['chrome-extension://chjfnpmbgdbipfogflkhleaceacndaop' ]
-aeblfdkhhhdcdjpifhhbdiojplfjncoa
-chjfnpmbgdbipfogflkhleaceacndaop
 ```
 
 Now just run your servers with environment variable RS_SRC=my_source_name
