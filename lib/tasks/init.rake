@@ -88,7 +88,7 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
     puts "Partial created: #{partial_path}"
 
     layout_file = Dir.glob('app/views/layouts/application.html.{erb,slim,haml}').first
-    layout_format = layout_file.split('.').last
+    layout_format = layout_file ? layout_file.split('.').last : 'erb'
 
     if layout_file
       puts "Detected layout file: #{layout_file}"
