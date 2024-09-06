@@ -47,7 +47,7 @@ module RailsSpotlight
         begin
           value.to_json(methods: [:duration])
           new_value = value
-        rescue StandardError
+        rescue StandardError, SystemStackError
           new_value = NOT_JSON_ENCODABLE
         end
         hash[key] = new_value

@@ -6,7 +6,12 @@ require 'erb'
 module RailsSpotlight
   class Configuration # rubocop:disable Metrics/ClassLength
     DEFAULT_NOT_ENCODABLE_EVENT_VALUES = {
-      'ActiveRecord' => ['ActiveRecord::ConnectionAdapters::AbstractAdapter'],
+      'ActiveRecord' => [
+        'ActiveRecord::ConnectionAdapters::AbstractAdapter',
+        'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter',
+        'ActiveRecord::ConnectionAdapters::RealTransaction',
+        'ActiveRecord::SchemaMigration'
+      ],
       'ActionDispatch' => ['ActionDispatch::Request', 'ActionDispatch::Response']
     }.freeze
 

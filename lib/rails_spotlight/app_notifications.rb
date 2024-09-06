@@ -97,7 +97,7 @@ module RailsSpotlight
 
     def self.migrating?
       defined?(Rake) && Rake.application.top_level_tasks.any? do |task|
-        task.start_with?('db:migrate', 'db:schema:load')
+        task.start_with?('db:migrate', 'db:schema:load', 'db:rollback')
       end
     end
 
