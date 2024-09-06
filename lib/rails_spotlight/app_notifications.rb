@@ -62,6 +62,9 @@ module RailsSpotlight
     # Subscribe to all events relevant to RailsPanel
     #
     def self.subscribe
+      # Skip RailsSpotlight subscriptions during migrations
+      return if migrating?
+
       new
         .subscribe('rsl.notification.log')
         .subscribe('sql.active_record', &SQL_BLOCK)
@@ -90,6 +93,12 @@ module RailsSpotlight
       # render_collection.action_view: This event is triggered when a collection is rendered using a partial.
       #                                It includes details about the collection being rendered,
       #                                such as the collection name and the partial being used to render each item.
+    end
+
+    def self.migrating?
+      defined?(Rake) && Rake.application.top_level_tasks.any? do |task|
+        task.start_with?('db:migrate', 'db:schema:load')
+      end
     end
 
     def subscribe(event_name)
