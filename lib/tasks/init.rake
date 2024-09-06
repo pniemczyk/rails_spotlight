@@ -48,7 +48,7 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
   desc 'Generate rails_spotlight JavaScript ERB partial for application layout to allow injecting JS code from the extension'
   task inject_js_partial: :environment do # rubocop:disable Metrics/BlockLength
     # Define the partial name and path
-    partial_name = '_rails_spotlight_extension_js.html.erb'
+    partial_name = 'rails_spotlight_extension_js.html.erb'
     partial_path = "app/views/layouts/#{partial_name}"
 
     # Define the JavaScript code
