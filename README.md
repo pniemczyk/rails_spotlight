@@ -11,6 +11,14 @@ Chrome extension [Rails Spotlight](https://chrome.google.com/webstore/detail/rai
 
 Add this line to your application's Gemfile:
 
+use bash
+
+```bash
+bundle add rails_spotlight --group development
+```
+
+or add it manually:
+
 ```ruby
 group :development do
   gem 'rails_spotlight'
