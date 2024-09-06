@@ -23,4 +23,3 @@ module RailsSpotlight
     end
   end
 end
-

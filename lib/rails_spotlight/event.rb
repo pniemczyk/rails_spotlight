@@ -57,8 +57,9 @@ module RailsSpotlight
     def not_encodable?(value)
       ::RailsSpotlight.config.not_encodable_event_values.any? do |module_name, class_names|
         next unless defined?(module_name.constantize)
+
         class_names.any? { |class_name| value.is_a?(class_name.constantize) }
-      rescue => e
+      rescue => e # rubocop:disable Lint/RescueException, Lint/RedundantCopDisableDirective, Style/RescueStandardError
         puts "Error in not_encodable? method: #{e.message}"
       end
     end

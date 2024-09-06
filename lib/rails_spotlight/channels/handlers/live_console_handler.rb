@@ -44,7 +44,7 @@ module RailsSpotlight
           executor.execute(command)
           if executor.execution_successful?
             {
-              payload: { result: executor.result_as_json(inspect_types: inspect_types) },
+              payload: { result: executor.result_as_json(inspect_types: inspect_types) }
             }
           else
             {

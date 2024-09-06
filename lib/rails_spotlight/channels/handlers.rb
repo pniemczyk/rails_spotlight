@@ -19,9 +19,7 @@ module RailsSpotlight
       def self.handle(data)
         case data['type']
         when LiveConsoleHandler::TYPE then LiveConsoleHandler.new(data).call
-        # when LogsHandler::TYPE then LogsHandler.new(data).call
-        else
-          nil
+        when LogsHandler::TYPE then LogsHandler.new(data).call
         end
       end
     end

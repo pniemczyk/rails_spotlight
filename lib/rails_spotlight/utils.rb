@@ -15,8 +15,7 @@ module RailsSpotlight
         line: line.to_i,
         method: method
       }
-    rescue
-      nil
+    rescue # rubocop:disable Style/RescueStandardError, Lint/SuppressedException
     end
 
     def sub_source_path(path)

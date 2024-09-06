@@ -7,7 +7,7 @@ module RailsSpotlight
     SEVERITY = %w[debug info warn error fatal unknown].freeze
     SEVERITY_MAP = { 0 => 'debug', 1 => 'info', 2 => 'warn', 3 => 'error', 4 => 'fatal', 5 => 'unknown' }.freeze
 
-    def add(severity, message = nil, progname = nil)
+    def add(severity, message = nil, progname = nil) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       severity ||= 5
       return true if @logdev.nil? || severity < level
 
@@ -37,7 +37,7 @@ module RailsSpotlight
       message.include?(::RailsSpotlight::Channels::SPOTLIGHT_CHANNEL)
     end
 
-    def _push_event(level, message, progname = nil)
+    def _push_event(level, message, progname = nil) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
       callsite = Utils.dev_callsite(caller.drop(1))
       name = progname.is_a?(String) || progname.is_a?(Symbol) ? progname : nil
       AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, callsite.merge(message: message, level: level, progname: name)) if AppRequest.current && callsite
@@ -45,8 +45,8 @@ module RailsSpotlight
       return unless ::RailsSpotlight.config.live_console_enabled?
       return if message.blank?
 
-      id = AppRequest.current ? AppRequest.current.id : nil
-      payload = (callsite || {}).merge(msg: message, src: ENV['RS_SRC'] || ::RailsSpotlight.config.default_rs_src, l: level, dt: Time.now.to_f, id: id,  pg: name)
+      id = AppRequest.current ? AppRequest.current.id : nil # rubocop:disable Style/SafeNavigation
+      payload = (callsite || {}).merge(msg: message, src: ENV['RS_SRC'] || ::RailsSpotlight.config.default_rs_src, l: level, dt: Time.now.to_f, id: id, pg: name)
       ::RailsSpotlight::Channels::SpotlightChannel.broadcast(type: 'logs', payload: payload)
     rescue StandardError => e
       RailsSpotlight.config.logger.fatal("#{e.message}\n #{e.backtrace.join("\n ")}")
