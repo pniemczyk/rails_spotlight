@@ -32,7 +32,7 @@ module RailsSpotlight
 
         require 'rails_spotlight/channels/spotlight_channel' if ::RailsSpotlight.config.request_completed_broadcast_enabled?
 
-        app.routes.draw { mount ActionCable.server => '/cable' } if ::RailsSpotlight.config.auto_mount_action_cable?
+        app.routes.draw { mount ActionCable.server => ::RailsSpotlight.config.action_cable_mount_path || '/cable' } if ::RailsSpotlight.config.auto_mount_action_cable?
       end
     end
 
