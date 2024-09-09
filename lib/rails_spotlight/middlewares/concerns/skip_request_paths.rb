@@ -20,7 +20,7 @@ module RailsSpotlight
       end
 
       def skip_paths
-        additional_skip_paths + default_skip_paths + ::RailsSpotlight.config.middleware_skipped_paths
+        @skip_paths ||= (additional_skip_paths + default_skip_paths + ::RailsSpotlight.config.middleware_skipped_paths).uniq
       end
 
       def asset?(path)

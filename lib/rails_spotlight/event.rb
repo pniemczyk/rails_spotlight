@@ -38,9 +38,10 @@ module RailsSpotlight
       return {} unless payload.is_a?(Hash)
 
       transform_hash(payload, deep: true) do |hash, key, value|
-        if value.class.to_s == 'ActionDispatch::Http::Headers'
+        value_class = value.class.to_s
+        if value_class == 'ActionDispatch::Http::Headers'
           value = value.to_h.select { |k, _| k.upcase == k }
-        elsif not_encodable?(value)
+        elsif value_class == 'SystemStackError' || not_encodable?(value)
           value = NOT_JSON_ENCODABLE
         end
 
@@ -59,8 +60,8 @@ module RailsSpotlight
         next unless defined?(module_name.constantize)
 
         class_names.any? { |class_name| value.is_a?(class_name.constantize) }
-      rescue => e # rubocop:disable Lint/RescueException, Lint/RedundantCopDisableDirective, Style/RescueStandardError
-        puts "Error in not_encodable? method: #{e.message}"
+      rescue # rubocop:disable Lint/RescueException, Lint/RedundantCopDisableDirective, Style/RescueStandardError
+        true
       end
     end
 

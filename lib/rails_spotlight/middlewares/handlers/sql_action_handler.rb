@@ -54,7 +54,7 @@ module RailsSpotlight
 
         def logger(_, started, finished, unique_id, payload)
           logs << { time: started, end: finished, unique_id: unique_id }.merge(
-            payload.as_json(except: %i[connection method name filename line])
+            payload.as_json(except: %i[connection method name filename line transaction])
           )
         end
 

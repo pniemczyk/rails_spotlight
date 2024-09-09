@@ -16,24 +16,27 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
       STORAGE_PATH: <%=Rails.root.join('tmp', 'data', 'rails_spotlight')%>
       STORAGE_POOL_SIZE: 20
       LOGGER: <%=Logger.new(Rails.root.join('log', 'rails_spotlight.log'))%>
+      # Prevent from processing and sending some data to the extension 
       MIDDLEWARE_SKIPPED_PATHS: []
       NOT_ENCODABLE_EVENT_VALUES:
       SKIP_RENDERED_IVARS: []
+      # File manager configuration
       BLOCK_EDITING_FILES: false
       BLOCK_EDITING_FILES_OUTSIDE_OF_THE_PROJECT: true
       DIRECTORY_INDEX_IGNORE: ['/.git', '**/*.lock', '**/.DS_Store', '/app/assets/images/**', '/app/assets/fonts/**', '/app/assets/builds/**']
       RUBOCOP_CONFIG_PATH: '.rubocop.yml'
+      # Workarounds of CSP restrictions for form JS execution from the extension
+      FORM_JS_EXECUTION_TOKEN: <%= Digest::MD5.hexdigest(Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name)%>
       # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
       AUTO_MOUNT_ACTION_CABLE: false
       ACTION_CABLE_MOUNT_PATH: /cable
       # Required for all action cable features
       USE_ACTION_CABLE: false
-      LIVE_CONSOLE_ENABLED: false
       # Experimental feature.
-      REQUEST_COMPLETED_BROADCAST_ENABLED: false
       LIVE_LOGS_ENABLED: false
       DEFAULT_RS_SRC: default
-      FORM_JS_EXECUTION_TOKEN: <%= Digest::MD5.hexdigest(Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name)%>
+      LIVE_CONSOLE_ENABLED: false
+      REQUEST_COMPLETED_BROADCAST_ENABLED: false
     YAML
 
     if File.exist?(config_path)
