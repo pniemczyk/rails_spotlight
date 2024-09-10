@@ -61,7 +61,7 @@ module RailsSpotlight
 
         class_names.any? { |class_name| value.is_a?(class_name.constantize) }
       rescue # rubocop:disable Lint/RescueException, Lint/RedundantCopDisableDirective, Style/RescueStandardError
-        true
+        false
       end
     end
 
