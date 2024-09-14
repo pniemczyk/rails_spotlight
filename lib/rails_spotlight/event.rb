@@ -34,25 +34,39 @@ module RailsSpotlight
 
     private
 
-    def json_encodable(payload)
+    def json_encodable(payload) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return {} unless payload.is_a?(Hash)
 
       transform_hash(payload, deep: true) do |hash, key, value|
-        value_class = value.class.to_s
-        if value_class == 'ActionDispatch::Http::Headers'
+        if value.class.to_s == 'ActionDispatch::Http::Headers'
           value = value.to_h.select { |k, _| k.upcase == k }
-        elsif value_class == 'SystemStackError' || not_encodable?(value)
+        elsif value.is_a?(Array) && defined?(ActiveRecord::Relation::QueryAttribute) && value.first.is_a?(ActiveRecord::Relation::QueryAttribute)
+          value = value.map(&method(:map_relation_query_attribute))
+        elsif not_encodable?(value)
           value = NOT_JSON_ENCODABLE
         end
 
         begin
           value.to_json(methods: [:duration])
           new_value = value
-        rescue StandardError, SystemStackError
+        rescue # rubocop:disable Lint/RedundantCopDisableDirective, Style/RescueStandardError
           new_value = NOT_JSON_ENCODABLE
         end
-        hash[key] = new_value
+        hash[key] = new_value # encode_value(value)
       end.with_indifferent_access
+    end
+
+    # ActiveRecord::Relation::QueryAttribute implementation changed in Rails 7.1 it getting binds need to be manually added
+    def map_relation_query_attribute(attr)
+      {
+        name: attr.name,
+        value: attr.value,
+        value_before_type_cast: attr.value_before_type_cast,
+        value_for_database: attr.value_for_database
+        # resign from type and original_attribute for now
+        # type: attr.type,
+        # original_attribute: attr.original_attribute or attr.original_value_for_database,
+      }
     end
 
     def not_encodable?(value)
@@ -60,8 +74,7 @@ module RailsSpotlight
         next unless defined?(module_name.constantize)
 
         class_names.any? { |class_name| value.is_a?(class_name.constantize) }
-      rescue # rubocop:disable Lint/RescueException, Lint/RedundantCopDisableDirective, Style/RescueStandardError
-        false
+      rescue # rubocop:disable Lint/SuppressedException, Style/RescueStandardError
       end
     end
 

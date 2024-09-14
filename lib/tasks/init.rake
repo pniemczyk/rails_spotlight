@@ -16,7 +16,7 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
       STORAGE_PATH: <%=Rails.root.join('tmp', 'data', 'rails_spotlight')%>
       STORAGE_POOL_SIZE: 20
       LOGGER: <%=Logger.new(Rails.root.join('log', 'rails_spotlight.log'))%>
-      # Prevent from processing and sending some data to the extension 
+      # Prevent from processing and sending some data to the extension
       MIDDLEWARE_SKIPPED_PATHS: []
       NOT_ENCODABLE_EVENT_VALUES:
       SKIP_RENDERED_IVARS: []

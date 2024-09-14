@@ -9,9 +9,7 @@ module RailsSpotlight
       'ActiveRecord' => [
         'ActiveRecord::ConnectionAdapters::AbstractAdapter',
         'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter',
-        'ActiveRecord::ConnectionAdapters::RealTransaction',
-        'ActiveRecord::SchemaMigration',
-        'ActiveRecord::Transaction'
+        'ActiveRecord::ConnectionAdapters::RealTransaction'
       ],
       'ActionDispatch' => ['ActionDispatch::Request', 'ActionDispatch::Response']
     }.freeze
