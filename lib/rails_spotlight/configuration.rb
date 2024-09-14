@@ -79,6 +79,7 @@ module RailsSpotlight
 
     alias live_console_enabled? live_console_enabled
     alias live_logs_enabled? live_logs_enabled
+    alias use_action_cable? use_action_cable
 
     def request_completed_broadcast_enabled
       @request_completed_broadcast_enabled && use_action_cable && action_cable_present?

@@ -31,7 +31,7 @@ module RailsSpotlight
     private
 
     def _skip_logging?(message)
-      return false unless ::RailsSpotlight.config.live_console_enabled?
+      return false unless ::RailsSpotlight.config.use_action_cable?
       return false unless message.is_a?(String)
 
       message.include?(::RailsSpotlight::Channels::SPOTLIGHT_CHANNEL)
@@ -42,7 +42,7 @@ module RailsSpotlight
       name = progname.is_a?(String) || progname.is_a?(Symbol) ? progname : nil
       AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, callsite.merge(message: message, level: level, progname: name)) if AppRequest.current && callsite
 
-      return unless ::RailsSpotlight.config.live_console_enabled?
+      return unless ::RailsSpotlight.config.use_action_cable?
       return if message.blank?
 
       id = AppRequest.current ? AppRequest.current.id : nil # rubocop:disable Style/SafeNavigation

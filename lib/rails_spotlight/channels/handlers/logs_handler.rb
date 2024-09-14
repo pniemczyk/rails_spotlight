@@ -13,7 +13,7 @@ module RailsSpotlight
         attr_reader :data
 
         def call
-          return unless ::RailsSpotlight.config.live_console_enabled?
+          return unless ::RailsSpotlight.config.live_logs_enabled?
           return unless data['type'] == TYPE
 
           for_project = Array(data['project'])
