@@ -23,9 +23,45 @@ module RailsSpotlight
       end
       return true if _skip_logging?(message)
 
-      _push_event(SEVERITY_MAP[severity], message, progname)
+      _rails_spotlight_log(SEVERITY_MAP[severity], message, progname, :broadcast)
       super(severity, message, progname) if defined?(super)
       true
+    end
+
+    def debug(message = nil, *args)
+      message = yield if message.nil? && block_given?
+      _rails_spotlight_log(:debug, message)
+      super
+    end
+
+    def info(message = nil, *args)
+      message = yield if message.nil? && block_given?
+      _rails_spotlight_log(:info, message)
+      super
+    end
+
+    def warn(message = nil, *args)
+      message = yield if message.nil? && block_given?
+      _rails_spotlight_log(:warn, message)
+      super
+    end
+
+    def error(message = nil, *args)
+      message = yield if message.nil? && block_given?
+      _rails_spotlight_log(:error, message)
+      super
+    end
+
+    def fatal(message = nil, *args)
+      message = yield if message.nil? && block_given?
+      _rails_spotlight_log(:fatal, message)
+      super
+    end
+
+    def unknown(message = nil, *args)
+      message = yield if message.nil? && block_given?
+      _rails_spotlight_log(:unknown, message)
+      super
     end
 
     private
@@ -37,11 +73,23 @@ module RailsSpotlight
       message.include?(::RailsSpotlight::Channels::SPOTLIGHT_CHANNEL)
     end
 
-    def _push_event(level, message, progname = nil) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
+    def _rails_spotlight_log(level, message, progname = nil, output = :event)
       callsite = Utils.dev_callsite(caller.drop(1))
       name = progname.is_a?(String) || progname.is_a?(Symbol) ? progname : nil
-      AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, callsite.merge(message: message, level: level, progname: name)) if AppRequest.current && callsite
+      output == :event ? _push_event(level, message, name) : _broadcast_log(message, level, callsite, name)
+    rescue StandardError => e
+      RailsSpotlight.config.logger.fatal("#{e.message}\n #{e.backtrace.join("\n ")}")
+    end
 
+    def _push_event(level, message, progname = nil)
+      callsite = Utils.dev_callsite(caller.drop(1)) || {}
+      name = progname.is_a?(String) || progname.is_a?(Symbol) ? progname : nil
+      AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, callsite.merge(message: message, level: level, progname: name)) if AppRequest.current
+    rescue StandardError => e
+      RailsSpotlight.config.logger.fatal("#{e.message}\n #{e.backtrace.join("\n ")}")
+    end
+
+    def _broadcast_log(message, level, callsite = {}, name = nil)
       return unless ::RailsSpotlight.config.use_action_cable?
       return if message.blank?
 
