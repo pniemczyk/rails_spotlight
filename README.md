@@ -141,6 +141,15 @@ Solution:
   - Switch flag off
   - REQUEST_COMPLETED_BROADCAST_ENABLED: false
 
+---
+
+SQL manager query execution freeze
+
+It may happen in rail 8
+
+Solution:
+  - Use `Execute query with write access toggle` to skip transactional/cancellable execution -> ![Toggle button](docs/assets/images/sql_execution_toggle.gif)
+
 ## Testing
 
 To run tests for all versions of Rails and Ruby, run:
