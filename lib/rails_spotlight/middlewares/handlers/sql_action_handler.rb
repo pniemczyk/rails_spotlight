@@ -14,22 +14,31 @@ module RailsSpotlight
 
         private
 
-        def transaction
+        def transactional(&block)
+          return block.call if force_execution?
+
           ActiveRecord::Base.transaction do
-            begin # rubocop:disable Style/RedundantBegin
-              ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record', monotonic: true) do
-                run
-              end
-            rescue => e # rubocop:disable Style/RescueStandardError
-              self.error = e
+            begin
+              block.call
             ensure
-              raise ActiveRecord::Rollback unless force_execution?
+              raise ActiveRecord::Rollback
             end
+          end
+        end
+
+        def transaction
+          begin # rubocop:disable Style/RedundantBegin
+            ActiveSupport::Notifications.subscribed(method(:logger), 'sql.active_record', monotonic: true) do
+              run
+            end
+          rescue => e # rubocop:disable Style/RescueStandardError
+            self.error = e
           end
         end
 
         def run # rubocop:disable Metrics/AbcSize
           RailsSpotlight.config.logger && RailsSpotlight.config.logger.info("Executing query: #{query}") # rubocop:disable Style/SafeNavigation
+
           return self.result = ActiveRecord::Base.connection.exec_query(query) if connection_options.blank? || !ActiveRecord::Base.respond_to?(:connects_to)
 
           connections = ActiveRecord::Base.connects_to(**connection_options)
@@ -48,7 +57,7 @@ module RailsSpotlight
             result: result,
             logs: logs,
             error: error.present? ? error.inspect : nil,
-          query_mode: force_execution? ? 'force' : 'default'
+            query_mode: force_execution? ? 'force' : 'default'
           }
         end
 
@@ -80,9 +89,9 @@ module RailsSpotlight
 
         def connection_options
           @connection_options ||= raw_options
-                                  .symbolize_keys
-                                  .slice(:database, :shards)
-                                  .reject { |_, v| v.nil? || (!v.is_a?(TrueClass) && !v.is_a?(FalseClass) && v.empty?) } # TODO: Check for each rails version
+                                    .symbolize_keys
+                                    .slice(:database, :shards)
+                                    .reject { |_, v| v.nil? || (!v.is_a?(TrueClass) && !v.is_a?(FalseClass) && v.empty?) } # TODO: Check for each rails version
         end
 
         def force_execution?

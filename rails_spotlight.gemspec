@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'rack-contrib', '>= 1.1', '< 3'
-  spec.add_dependency 'railties', '>= 3.0.0', '< 7.3'
+  spec.add_dependency 'railties', '>= 3.0.0', '< 8.1'
   spec.add_development_dependency 'action-cable-testing', '~> 0.6.0'
   spec.add_development_dependency 'awesome_print', '~> 1.6'
   spec.add_development_dependency 'guard', '~> 2.12'
