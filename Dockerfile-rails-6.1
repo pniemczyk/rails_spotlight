@@ -1,4 +1,4 @@
-FROM ruby:2.6-alpine
+FROM ruby:3.1.2-alpine
 
 RUN apk add --update --no-cache \
         build-base \
@@ -18,7 +18,6 @@ WORKDIR /app
 
 RUN bundle config set force_ruby_platform true
 RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc"
-RUN gem update --system 3.2.3
 RUN gem install bundler -v 2.4.6
 RUN gem install rails -v 6.1.7
 RUN gem install rspec-rails -v 4.1.1
@@ -31,6 +30,7 @@ RUN bundle install
 RUN rails generate rspec:install
 
 COPY fake_spec_res/routes.rb /app/config/
+COPY fake_spec_res/config/rails_spotlight.yml /app/config/
 COPY fake_spec_res/dummy_controller.rb /app/app/controllers/
 COPY fake_spec_res/dummy /app/app/views/dummy
 COPY fake_spec_res/rails_spotlight_spec.rb /app/spec/integration/

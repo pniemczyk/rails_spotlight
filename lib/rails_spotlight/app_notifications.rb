@@ -59,14 +59,13 @@ module RailsSpotlight
       Event.new(name, start, ending, transaction_id, payload)
     }
 
-    # Subscribe to all events relevant to RailsPanel
-    #
+    # Subscribe to all relevant events
     def self.subscribe
       # Skip RailsSpotlight subscriptions during migrations
       return if migrating?
 
       new
-        .subscribe('rsl.notification.log')
+        # .subscribe('rsl.notification.log') # We do not publish events to this channel for now
         .subscribe('sql.active_record', &SQL_BLOCK)
         .subscribe('sql.sequel', &SQL_BLOCK)
         .subscribe('render_partial.action_view', &VIEW_BLOCK)

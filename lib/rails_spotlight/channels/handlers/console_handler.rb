@@ -5,7 +5,7 @@ require_relative '../../rails_command_executor'
 module RailsSpotlight
   module Channels
     module Handlers
-      class LiveConsoleHandler
+      class ConsoleHandler
         TYPE = 'console'
 
         def initialize(data)
@@ -15,7 +15,7 @@ module RailsSpotlight
         attr_reader :data
 
         def call
-          return unless ::RailsSpotlight.config.live_logs_enabled?
+          return unless ::RailsSpotlight.config.cable_logs_enabled?
           return unless data['type'] == TYPE
 
           command = data['command']
@@ -44,7 +44,7 @@ module RailsSpotlight
           executor.execute(command)
           if executor.execution_successful?
             {
-              payload: { result: executor.result_as_json(inspect_types: inspect_types) }
+              payload: { result: executor.result_as_json(inspect_types:) }
             }
           else
             {

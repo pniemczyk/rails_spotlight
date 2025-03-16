@@ -12,9 +12,7 @@ module RailsSpotlight
           "Rails Spotlight is working!\nRails version: #{Rails.version}\nRails environment: #{Rails.env}"
         end
 
-        def skip_project_validation?
-          true
-        end
+        def skip_project_validation? = true
 
         def json_response_body
           {

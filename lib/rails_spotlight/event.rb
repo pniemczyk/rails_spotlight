@@ -15,6 +15,8 @@ module RailsSpotlight
     def initialize(name, start, ending, transaction_id, payload)
       super(name, start, ending, transaction_id, json_encodable(payload))
       @duration = 1000.0 * (ending - start)
+    rescue # rubocop:disable Lint/RedundantCopDisableDirective, Style/RescueStandardError
+      @duration = 0
     end
 
     def self.events_for_exception(exception_wrapper)
@@ -28,7 +30,7 @@ module RailsSpotlight
       end
       trace.unshift "#{exception.class} (#{exception.message})"
       trace.map do |call|
-        Event.new('process_action.action_controller.exception', 0, 0, nil, call: call)
+        Event.new('process_action.action_controller.exception', 0, 0, nil, call:)
       end
     end
 
@@ -42,7 +44,7 @@ module RailsSpotlight
           value = value.to_h.select { |k, _| k.upcase == k }
         elsif value.is_a?(Array) && defined?(ActiveRecord::Relation::QueryAttribute) && value.first.is_a?(ActiveRecord::Relation::QueryAttribute)
           value = value.map(&method(:map_relation_query_attribute))
-        elsif not_encodable?(value)
+        elsif !value.respond_to?(:to_json) || not_encodable?(value)
           value = NOT_JSON_ENCODABLE
         end
 
@@ -54,6 +56,8 @@ module RailsSpotlight
         end
         hash[key] = new_value # encode_value(value)
       end.with_indifferent_access
+    rescue # rubocop:disable Lint/RedundantCopDisableDirective, Style/RescueStandardError
+      {}
     end
 
     # ActiveRecord::Relation::QueryAttribute implementation changed in Rails 7.1 it getting binds need to be manually added
@@ -71,11 +75,23 @@ module RailsSpotlight
 
     def not_encodable?(value)
       ::RailsSpotlight.config.not_encodable_event_values.any? do |module_name, class_names|
-        next unless defined?(module_name.constantize)
+        next unless safe_constantize(module_name)
 
-        class_names.any? { |class_name| value.is_a?(class_name.constantize) }
-      rescue # rubocop:disable Lint/SuppressedException, Style/RescueStandardError
+        class_names.any? do |class_name|
+          klass = safe_constantize(class_name)
+          next false unless klass
+
+          value.is_a?(klass)
+        end
+      rescue # rubocop:disable Style/RescueStandardError
+        true
       end
+    end
+
+    def safe_constantize(name)
+      name.constantize
+    rescue NameError
+      nil
     end
 
     def transform_hash(original, options = {}, &block)

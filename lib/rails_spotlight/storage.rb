@@ -15,19 +15,14 @@ module RailsSpotlight
       maintain_file_pool(RailsSpotlight.config.storage_pool_size)
     end
 
-    def read
-      # avoid FileNotFound error
-      File.exist?(json_file) ? File.read(json_file) : '[]'
-    end
+    def read = File.exist?(json_file) ? File.read(json_file) : '[]'
 
     private
 
     def maintain_file_pool(size)
       files = Dir["#{dir_path}/*.json"]
       files = files.sort_by { |f| -file_ctime(f) }
-      (files[size..] || []).each do |file|
-        FileUtils.rm_f(file)
-      end
+      (files[size..] || []).each { |file| FileUtils.rm_f(file) }
     end
 
     def file_ctime(file)
@@ -36,12 +31,7 @@ module RailsSpotlight
       0
     end
 
-    def json_file
-      File.join(dir_path, "#{key}.json")
-    end
-
-    def dir_path
-      @dir_path ||= RailsSpotlight.config.storage_path
-    end
+    def json_file = @json_file ||= File.join(dir_path, "#{key}.json")
+    def dir_path = @dir_path ||= RailsSpotlight.config.storage_path
   end
 end

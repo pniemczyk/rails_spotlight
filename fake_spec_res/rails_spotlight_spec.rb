@@ -6,7 +6,9 @@ require 'fileutils'
 RSpec.describe DummyController, type: :request do # rubocop:disable Metrics/BlockLength
   context 'rails_spotlight' do
     it 'serve a file source' do
-      post '/__rails_spotlight/file.json', params: { file: 'config/application.rb', mode: :read }.to_json
+      post '/__rails_spotlight/file.json',
+           params: { file: 'config/application.rb', mode: :read }.to_json,
+           headers: { 'CONTENT_TYPE' => 'application/json' }
 
       expect(response).to be_successful
       expect(response.body).to include('# Require the gems listed in Gemfile, including any gems')
@@ -18,20 +20,36 @@ RSpec.describe DummyController, type: :request do # rubocop:disable Metrics/Bloc
       File.write(Rails.root.join(file), 'OLD')
       expect(File.read(Rails.root.join(file))).to_not eq content
 
-      post '/__rails_spotlight/file.json', params: { file: file, mode: :write, content: content }.to_json
+      post '/__rails_spotlight/file.json',
+           params: { file: file, mode: :write, content: content }.to_json,
+           headers: { 'CONTENT_TYPE' => 'application/json' }
 
       expect(response).to be_successful
-      expect(response.body).to eq({ source: content, changed: true, project: 'App', new_content: 'TEST' }.to_json)
+      expect(response.body).to eq({
+        source: content,
+        changed: true,
+        in_project: true,
+        relative_path: file,
+        root_path: '/app',
+        new_content: content,
+        project: 'App'
+      }.to_json)
+
       expect(File.read(Rails.root.join(file))).to eq content
     end
 
     it 'serve a verify info' do
-      get '/__rails_spotlight/verify.json'
+      body = { test: 'ok' }.to_json
+      post '/__rails_spotlight/verify.json?check=yes',
+           params: body,
+           headers: { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_RAILS_SPOTLIGHT' => '1.0.0' }
       expect(response).to be_successful
     end
 
     it 'serve a sql result' do
-      post '/__rails_spotlight/sql.json', params: { query: 'select sqlite_version();' }.to_json
+      post '/__rails_spotlight/sql.json',
+           params: { query: 'select sqlite_version();' }.to_json,
+           headers: { 'CONTENT_TYPE' => 'application/json' }
       expect(response).to be_successful
       expect(JSON.parse(response.body).keys).to eq(%w[query result logs error query_mode project])
     end

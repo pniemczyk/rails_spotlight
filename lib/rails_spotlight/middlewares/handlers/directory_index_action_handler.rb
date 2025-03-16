@@ -9,9 +9,13 @@ module RailsSpotlight
     module Handlers
       class DirectoryIndexActionHandler < BaseActionHandler
         def execute
-          @result = directory_to_json(::RailsSpotlight.config.rails_root)
-        rescue => e # rubocop:disable Style/RescueStandardError
-          raise UnprocessableEntity, e.message
+          raise Forbidden.new('File manager is disabled', code: :disabled_file_manager_settings) unless enabled?
+
+          @result = begin
+            directory_to_json(::RailsSpotlight.config.rails_root)
+          rescue => e # rubocop:disable Style/RescueStandardError
+            raise UnprocessableEntity.new(e.message, code: :directory_index_error)
+          end
         end
 
         private
@@ -55,29 +59,12 @@ module RailsSpotlight
           end
         end
 
-        def ignore
-          @ignore ||= body_fetch('ignore', [])
-        end
-
-        def sort_folders_first
-          @sort_folders_first ||= body_fetch('sort_folders_first', true)
-        end
-
-        def omnit_gitignore
-          @omnit_gitignore ||= body_fetch('omnit_gitignore', false)
-        end
-
-        def ignore_patterns
-          @ignore_patterns ||= ignore + ::RailsSpotlight.config.directory_index_ignore + (omnit_gitignore ? [] : gitignore_patterns)
-        end
-
-        def gitignore_file
-          @gitignore_file ||= File.join(::RailsSpotlight.config.rails_root, '.gitignore')
-        end
-
-        def show_empty_directories
-          @show_empty_directories ||= body_fetch('show_empty_directories', false)
-        end
+        def ignore = @ignore ||= body_fetch('ignore', [])
+        def sort_folders_first = @sort_folders_first ||= body_fetch('sort_folders_first', true)
+        def omnit_gitignore = @omnit_gitignore ||= body_fetch('omnit_gitignore', false)
+        def ignore_patterns = @ignore_patterns ||= ignore + ::RailsSpotlight.config.directory_index_ignore + (omnit_gitignore ? [] : gitignore_patterns)
+        def gitignore_file = @gitignore_file ||= File.join(::RailsSpotlight.config.rails_root, '.gitignore')
+        def show_empty_directories = @show_empty_directories ||= body_fetch('show_empty_directories', false)
 
         def gitignore_patterns
           @gitignore_patterns ||= if File.exist?(gitignore_file)
@@ -103,9 +90,11 @@ module RailsSpotlight
         def json_response_body
           {
             root_path: ::RailsSpotlight.config.rails_root,
-            result: result
+            result:
           }
         end
+
+        def enabled? = ::RailsSpotlight.config.file_manager_enabled
       end
     end
   end

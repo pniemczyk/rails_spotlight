@@ -25,9 +25,7 @@ module RailsSpotlight
 
       attr_reader :app, :app_config
 
-      def default_skip_paths
-        %w[/__better_errors /__meta_request]
-      end
+      def default_skip_paths = %w[/__better_errors /__meta_request]
     end
   end
 end

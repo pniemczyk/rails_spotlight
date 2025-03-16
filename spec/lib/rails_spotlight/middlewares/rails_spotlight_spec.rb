@@ -7,7 +7,19 @@ Rails.application.config.middleware.use RailsSpotlight::Middlewares::RequestHand
 RSpec.describe RailsSpotlight::Middlewares, type: :request do
   describe 'RequestHandler' do
     context 'when requesting a file action' do
+      it 'returns forbidden when file manager is disabled' do
+        expect(::RailsSpotlight.config).to receive(:file_manager_enabled).and_return(false)
+        body = { file: 'spec/fixtures/test.txt', mode: 'read' }.to_json
+        post '/__rails_spotlight/file.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
+        expect(response).to_not be_successful
+        expect(response).to have_http_status(:forbidden)
+        json_body = JSON.parse(response.body)
+        expect(json_body['code']).to eq('disabled_file_manager_settings')
+        expect(json_body['status']).to eq(403)
+      end
+
       it 'as read mode returns response correctly' do
+        expect(::RailsSpotlight.config).to receive(:file_manager_enabled).and_return(true)
         body = { file: 'spec/fixtures/test.txt', mode: 'read' }.to_json
         post '/__rails_spotlight/file.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
         expect(response).to be_successful
@@ -21,6 +33,7 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
       end
 
       it 'as write mode returns response correctly' do
+        expect(::RailsSpotlight.config).to receive(:file_manager_enabled).and_return(true)
         expect(::RailsSpotlight.config).to receive(:block_editing_files).and_return(false)
         body = { file: 'spec/fixtures/test.txt', mode: 'write', content: 'change the text' }.to_json
         expect(File).to receive(:write).with(Rails.root.join('spec/fixtures/test.txt').to_s, 'change the text')
@@ -37,6 +50,7 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
       end
 
       it 'as write mode returns return unprocessed when editing file is blocked' do
+        expect(::RailsSpotlight.config).to receive(:file_manager_enabled).and_return(true)
         expect(::RailsSpotlight.config).to receive(:block_editing_files).and_return(true)
         body = { file: 'spec/fixtures/test.txt', mode: 'write', content: 'change the text' }.to_json
         post '/__rails_spotlight/file.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
@@ -44,6 +58,7 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
       end
 
       it 'as write mode returns return unprocessed when editing file outside project is blocked is blocked' do
+        expect(::RailsSpotlight.config).to receive(:file_manager_enabled).and_return(true)
         expect(::RailsSpotlight.config).to receive(:block_editing_files).and_return(false)
         expect(::RailsSpotlight.config).to receive(:block_editing_files_outside_of_the_project)
         expect(File).to receive(:exist?).at_least(:once) do |args|
@@ -56,7 +71,23 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
     end
 
     context 'when requesting a directory index action' do
+      it 'returns forbidden when file manager is disabled' do
+        expect(::RailsSpotlight.config).to receive(:file_manager_enabled).and_return(false)
+        body = {
+          ignore: RailsSpotlight::Configuration::DEFAULT_DIRECTORY_INDEX_IGNORE + %w[.gitignore .bundle /tmp /extensions],
+          omnit_gitignore: false,
+          show_empty_directories: false
+        }.to_json
+        post '/__rails_spotlight/directory_index.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
+        expect(response).to_not be_successful
+        expect(response).to have_http_status(:forbidden)
+        json_body = JSON.parse(response.body)
+        expect(json_body['code']).to eq('disabled_file_manager_settings')
+        expect(json_body['status']).to eq(403)
+      end
+
       it 'returns response correctly' do
+        expect(::RailsSpotlight.config).to receive(:file_manager_enabled).and_return(true)
         body = {
           ignore: RailsSpotlight::Configuration::DEFAULT_DIRECTORY_INDEX_IGNORE + %w[.gitignore .bundle /tmp /extensions],
           omnit_gitignore: false,
@@ -102,7 +133,19 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
     context 'when requesting a sql action' do
       let!(:user_data) { { name: 'test_man', email: 'just@simple.com' } }
       before { User.create!(user_data) unless User.find_by(email: user_data[:email]) }
+
+      it 'returns forbidden when sql manager is disabled' do
+        expect(::RailsSpotlight.config).to receive(:sql_console_enabled?).and_return(false)
+        body = { query: 'select * from users', mode: :soft }.to_json
+        post '/__rails_spotlight/sql.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
+        expect(response).to_not be_successful
+        json_response = JSON.parse(response.body)
+        expect(json_response['code']).to eq('disabled_sql_console_settings')
+        expect(json_response['status']).to eq(403)
+      end
+
       it 'as soft mode returns response correctly' do
+        expect(::RailsSpotlight.config).to receive(:sql_console_enabled?).and_return(true)
         body = { query: 'select * from users', mode: :soft }.to_json
         post '/__rails_spotlight/sql.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
         expect(response).to be_successful
@@ -116,6 +159,7 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
       end
 
       it 'as force mode returns response correctly' do
+        expect(::RailsSpotlight.config).to receive(:sql_console_enabled?).and_return(true)
         body = { query: "delete from users where email=\"#{user_data[:email]}\"", mode: :force }.to_json
         expect {
           post '/__rails_spotlight/sql.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }
@@ -132,6 +176,7 @@ RSpec.describe RailsSpotlight::Middlewares, type: :request do
       end
 
       it 'as soft mode with destructive query returns response correctly' do
+        expect(::RailsSpotlight.config).to receive(:sql_console_enabled?).and_return(true)
         body = { query: "delete from users where email=\"#{user_data[:email]}\"", mode: :default }.to_json
         expect {
           post '/__rails_spotlight/sql.json', params: body, headers: { 'CONTENT_TYPE' => 'application/json' }

@@ -10,18 +10,13 @@ module RailsSpotlight
 
         def json_response_body
           {
-            events: events,
+            events:,
             root_path: ::RailsSpotlight.config.rails_root
           }
         end
 
-        def id
-          @id ||= request.params['id']
-        end
-
-        def events
-          @events ||= Storage.new(id).read || []
-        end
+        def id = @id ||= request.params['id']
+        def events = @events ||= Storage.new(id).read || []
       end
     end
   end

@@ -33,6 +33,25 @@ module RailsSpotlight
         RailsSpotlight.config.logger.fatal("#{e.message}\n #{e.backtrace.join("\n ")}")
       end
 
+      def self.broadcast_log(message, level, callsite = {}, name = nil) # rubocop:disable Metrics/CyclomaticComplexity
+        return unless ::RailsSpotlight.config.use_cable?
+        return if message.blank?
+
+        broadcast(
+          type: 'logs',
+          payload: (callsite || {}).merge(
+            msg: message,
+            src: ENV['RS_SRC'] || RailsSpotlight.config.default_rs_src,
+            l: level,
+            dt: Time.now.to_f,
+            id: AppRequest.current&.id,
+            pg: name
+          )
+        )
+      rescue StandardError => e
+        RailsSpotlight.config.logger.fatal("#{e.message}\n #{e.backtrace&.join("\n ")}")
+      end
+
       def subscribed
         stream_from ::RailsSpotlight::Channels::SPOTLIGHT_CHANNEL
         publish({ message: "Your #{project} project is now connected to the spotlight channel.", code: :connected, type: :info })
@@ -54,7 +73,7 @@ module RailsSpotlight
       private
 
       def publish(data)
-        connection.transmit identifier: @identifier, message: data.merge(project: project, version: version)
+        connection.transmit identifier: @identifier, message: data.merge(project:, version:)
         # we do not use transmit because it is triggering logs and can cause an infinite loop
         # transmit(data.merge(project: project, version: version))
       end

@@ -49,8 +49,8 @@ module RailsSpotlight
             payload: {
               id: rails_spotlight_request_id,
               http_method: env['REQUEST_METHOD'],
-              host: host,
-              url: url,
+              host:,
+              url:,
               format: request.format.symbol,
               controller: request.path_parameters[:controller],
               action: request.path_parameters[:action]

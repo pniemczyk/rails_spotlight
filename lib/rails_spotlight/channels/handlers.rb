@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'handlers/live_console_handler'
+require_relative 'handlers/console_handler'
 require_relative 'handlers/logs_handler'
 
 module RailsSpotlight
@@ -14,11 +14,11 @@ module RailsSpotlight
 
         attr_reader :code
       end
-      TYPES = [LiveConsoleHandler::TYPE, LogsHandler::TYPE].freeze
+      TYPES = [ConsoleHandler::TYPE, LogsHandler::TYPE].freeze
 
       def self.handle(data)
         case data['type']
-        when LiveConsoleHandler::TYPE then LiveConsoleHandler.new(data).call
+        when ConsoleHandler::TYPE then ConsoleHandler.new(data).call
         when LogsHandler::TYPE then LogsHandler.new(data).call
         end
       end

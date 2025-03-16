@@ -4,8 +4,8 @@ Chrome extension [Rails Spotlight](https://chrome.google.com/webstore/detail/rai
 
 ## Support for
 
-* Rails 5+
-* Ruby 2.6+
+* Rails 6+
+* Ruby 3.1+
 
 ## Installation
 
@@ -44,24 +44,47 @@ file will be created in `config/rails_spotlight.yml`
   STORAGE_PATH: <%=Rails.root.join('tmp', 'data', 'rails_spotlight')%>
   STORAGE_POOL_SIZE: 20
   LOGGER: <%=Logger.new(Rails.root.join('log', 'rails_spotlight.log'))%>
+  
+  # Security configuration
+  DATA_ACCESS_TOKEN: # prevent from unauthorized access to the data
+  RAILS_SPOTLIGHT_PROJECT:
+  
+  # Prevent from processing and sending some data to the extension
   MIDDLEWARE_SKIPPED_PATHS: []
   NOT_ENCODABLE_EVENT_VALUES:
   SKIP_RENDERED_IVARS: []
+  
+  # Features
+  FILE_MANAGER_ENABLED: true
+  RUBOCOP_ENABLED: true
+  SQL_CONSOLE_ENABLED: true
+  IRB_CONSOLE_ENABLED: true
+  
+  # File manager configuration
   BLOCK_EDITING_FILES: false
   BLOCK_EDITING_FILES_OUTSIDE_OF_THE_PROJECT: true
   DIRECTORY_INDEX_IGNORE: ['/.git', '**/*.lock', '**/.DS_Store', '/app/assets/images/**', '/app/assets/fonts/**', '/app/assets/builds/**']
+  
+  # Rubocop configuration
   RUBOCOP_CONFIG_PATH: '.rubocop.yml'
-  # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
-  AUTO_MOUNT_ACTION_CABLE: false
-  ACTION_CABLE_MOUNT_PATH: /cable
-  # Required for all action cable features
-  USE_ACTION_CABLE: false
-  LIVE_CONSOLE_ENABLED: false
-  # Experimental feature.
-  REQUEST_COMPLETED_BROADCAST_ENABLED: false
-  LIVE_LOGS_ENABLED: false
-  DEFAULT_RS_SRC: default
+  
+  # Workarounds of CSP restrictions for form JS execution from the extension
   FORM_JS_EXECUTION_TOKEN: <%= Digest::MD5.hexdigest(Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name)%>
+  
+  # Required for all action cable features
+  USE_CABLE: false
+  
+  # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
+  AUTO_MOUNT_CABLE: false
+  CABLE_MOUNT_PATH: /cable
+  
+  # Experimental feature.
+  CABLE_LOGS_ENABLED: false
+  DEFAULT_RS_SRC: default
+  
+  CABLE_CONSOLE_ENABLED: false
+  
+  REQUEST_COMPLETED_BROADCAST_ENABLED: false
 ```
 
 ## Additional metrics
@@ -69,7 +92,7 @@ file will be created in `config/rails_spotlight.yml`
 To enable additional rendering metrics like local variables, instance variables, params etc. add to your layout file:
 
 ```erb
-<% if Rails.env.development? %>
+<% if Rails.env.development? && defined?(::RailsSpotlight)%>
   <%= RailsSpotlight::RenderViewReporter.report_rendered_view_locals(self, locals: local_assigns, params: params, skip_vars: %i[current_template], metadata: { just_test: 'Works' }) %>
 <% end %>
 ```
@@ -77,8 +100,8 @@ To enable additional rendering metrics like local variables, instance variables,
 ## Experimental features
 Live logs requires action cable to be enabled. 
 
-USE_ACTION_CABLE: true
-LIVE_LOGS_ENABLED: true
+USE_CABLE: true
+CABLE_LOGS_ENABLED: true
 
 When you want to use different sources for the cable logs you need to update `cable.yml` file. 
 
@@ -127,10 +150,10 @@ Known issue:
 
 Authentication error when using: 
   - Specific authentication method and action cable
-  - AUTO_MOUNT_ACTION_CABLE: true
+  - AUTO_MOUNT_CABLE: true
 
 Solution:
-  - Set AUTO_MOUNT_ACTION_CABLE: false
+  - Set AUTO_MOUNT_CABLE: false
   - Add manually `mount ActionCable.server => '/cable'` to `config/routes.rb` with proper authentication method
 
 ---

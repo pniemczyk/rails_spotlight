@@ -16,26 +16,46 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
       STORAGE_PATH: <%=Rails.root.join('tmp', 'data', 'rails_spotlight')%>
       STORAGE_POOL_SIZE: 20
       LOGGER: <%=Logger.new(Rails.root.join('log', 'rails_spotlight.log'))%>
+      
+      # Security configuration
+      DATA_ACCESS_TOKEN:
+      RAILS_SPOTLIGHT_PROJECT:
+      
       # Prevent from processing and sending some data to the extension
       MIDDLEWARE_SKIPPED_PATHS: []
       NOT_ENCODABLE_EVENT_VALUES:
       SKIP_RENDERED_IVARS: []
+      
+      # Features
+      FILE_MANAGER_ENABLED: true
+      RUBOCOP_ENABLED: true
+      SQL_CONSOLE_ENABLED: true
+      IRB_CONSOLE_ENABLED: true
+      
       # File manager configuration
       BLOCK_EDITING_FILES: false
       BLOCK_EDITING_FILES_OUTSIDE_OF_THE_PROJECT: true
       DIRECTORY_INDEX_IGNORE: ['/.git', '**/*.lock', '**/.DS_Store', '/app/assets/images/**', '/app/assets/fonts/**', '/app/assets/builds/**']
+      
+      # Rubocop configuration
       RUBOCOP_CONFIG_PATH: '.rubocop.yml'
+      
       # Workarounds of CSP restrictions for form JS execution from the extension
       FORM_JS_EXECUTION_TOKEN: <%= Digest::MD5.hexdigest(Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name)%>
-      # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
-      AUTO_MOUNT_ACTION_CABLE: false
-      ACTION_CABLE_MOUNT_PATH: /cable
+      
       # Required for all action cable features
-      USE_ACTION_CABLE: false
+      USE_CABLE: false
+      
+      # Rest of the configuration is required for ActionCable. It will be disabled automatically in when ActionCable is not available.
+      AUTO_MOUNT_CABLE: false
+      CABLE_MOUNT_PATH: /cable
+      
       # Experimental feature.
-      LIVE_LOGS_ENABLED: false
+      CABLE_LOGS_ENABLED: false
       DEFAULT_RS_SRC: default
-      LIVE_CONSOLE_ENABLED: false
+      
+      CABLE_CONSOLE_ENABLED: false
+      
       REQUEST_COMPLETED_BROADCAST_ENABLED: false
     YAML
 

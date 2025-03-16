@@ -13,7 +13,7 @@ module RailsSpotlight
       {
         filename: sub_source_path(filename),
         line: line.to_i,
-        method: method
+        method:
       }
     rescue # rubocop:disable Style/RescueStandardError, Lint/SuppressedException
     end

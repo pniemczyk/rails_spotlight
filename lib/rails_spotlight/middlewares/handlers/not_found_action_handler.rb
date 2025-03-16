@@ -5,7 +5,7 @@ module RailsSpotlight
     module Handlers
       class NotFoundActionHandler < BaseActionHandler
         def execute
-          raise NotFound, 'Not found'
+          raise NotFound.new('Not found', code: :action_not_found)
         end
       end
     end

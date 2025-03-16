@@ -7,12 +7,11 @@ module RailsSpotlight
   module Middlewares
     module Handlers
       class CodeAnalysisActionHandler < BaseActionHandler
-        def skip_project_validation?
-          true
-        end
+        def skip_project_validation? = true
 
         def execute
-          raise UnprocessableEntity, 'Please add rubocop to your project' unless rubocop_installed?
+          raise Forbidden.new('Code analysis is disabled', code: :disabled_rubocop_settings) unless enabled?
+          raise UnprocessableEntity.new('Please add rubocop to your project', code: :rubocop_not_installed) unless rubocop_installed?
         end
 
         private
@@ -64,8 +63,8 @@ module RailsSpotlight
 
             {
               source: variant == :autofix ? corrected_source : source,
-              analysis_result: analysis_result,
-              variant: variant
+              analysis_result:,
+              variant:
             }
           ensure
             # Close and unlink the tempfile
@@ -76,13 +75,9 @@ module RailsSpotlight
           end
         end
 
-        def source
-          @source ||= body_fetch('source')
-        end
-
-        def variant
-          @variant ||= body_fetch('variant', 'check').to_sym
-        end
+        def source = @source ||= body_fetch('source')
+        def variant = @variant ||= body_fetch('variant', 'check').to_sym
+        def enabled? = ::RailsSpotlight.config.rubocop_enabled?
       end
     end
   end

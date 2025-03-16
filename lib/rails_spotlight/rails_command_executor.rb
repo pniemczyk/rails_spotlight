@@ -31,15 +31,13 @@ module RailsSpotlight
 
     attr_reader :result, :console, :error, :syntax_error
 
-    def execution_successful?
-      error.nil?
-    end
+    def execution_successful? = error.nil?
 
     def result_as_json(inspect_types: false)
       if error
         {
           status: :error,
-          syntax_error: syntax_error,
+          syntax_error:,
           error: error.respond_to?(:message) ? error.message : error.to_s,
           backtrace: error.respond_to?(:backtrace) ? error.backtrace : nil
         }
@@ -50,7 +48,7 @@ module RailsSpotlight
           raw: result,
           type: result.class.name,
           types: result_inspect_types(inspect_types, result),
-          console: console
+          console:
         }
       end
     end

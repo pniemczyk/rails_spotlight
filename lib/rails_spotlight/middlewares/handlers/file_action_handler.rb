@@ -5,26 +5,20 @@ module RailsSpotlight
     module Handlers
       class FileActionHandler < BaseActionHandler
         def execute
-          raise NotFound, 'File not found' unless path_valid?
+          raise Forbidden.new('File manager is disabled', code: :disabled_file_manager_settings) unless enabled?
+          raise NotFound.new('File not found', code: :file_not_found) unless path_valid?
 
-          if write_mode?
-            try_to_update_file
-          else
-            File.read(file_path)
+          begin
+            write_mode? ? try_to_update_file : File.read(file_path)
+          rescue => e # rubocop:disable Style/RescueStandardError
+            raise UnprocessableEntity.new(e.message, code: write_mode? ? :file_update_error : :file_read_error)
           end
-        rescue => e # rubocop:disable Style/RescueStandardError
-          raise UnprocessableEntity, e.message
         end
 
         private
 
-        def text_response_body
-          File.read(file_path)
-        end
-
-        def new_content
-          body_fetch('content')
-        end
+        def text_response_body = File.read(file_path)
+        def new_content = body_fetch('content')
 
         def json_response_body
           {
@@ -33,11 +27,7 @@ module RailsSpotlight
             in_project: file_in_project?,
             relative_path: Pathname.new(file_path).relative_path_from(::RailsSpotlight.config.rails_root).to_s,
             root_path: ::RailsSpotlight.config.rails_root
-          }.merge(write_mode? ? { new_content: new_content } : {})
-        end
-
-        def write_mode?
-          request_mode == 'write'
+          }.merge(write_mode? ? { new_content: } : {})
         end
 
         def try_to_update_file
@@ -56,13 +46,9 @@ module RailsSpotlight
           'Editing files is blocked. Please check the Rails spotlight BLOCK_EDITING_FILES_OUTSIDE_OF_THE_PROJECT configuration.'
         end
 
-        def request_mode
-          @request_mode ||= body_fetch('mode', 'read')
-        end
-
-        def path_valid?
-          File.exist?(file_path)
-        end
+        def write_mode? = request_mode == 'write'
+        def request_mode = @request_mode ||= body_fetch('mode', 'read')
+        def path_valid? = File.exist?(file_path)
 
         def file_path
           @file_path ||= if path_file_in_project?
@@ -78,29 +64,13 @@ module RailsSpotlight
                          end
         end
 
-        def original_file_path
-          @original_file_path ||= body_fetch('file')
-        end
+        def original_file_path = @original_file_path ||= body_fetch('file')
 
-        def path_file_in_project?
-          @path_file_in_project ||= original_file_path.start_with?(::RailsSpotlight.config.rails_root)
-        end
-
-        def file_in_project?
-          File.exist?(File.join(::RailsSpotlight.config.rails_root, original_file_path))
-        end
-
-        def file_in_project_app_dir?
-          File.exist?(File.join(::RailsSpotlight.config.rails_root, 'app', original_file_path))
-        end
-
-        def file_in_project_views_dir?
-          File.exist?(File.join(::RailsSpotlight.config.rails_root, 'app', 'views', original_file_path))
-        end
-
-        def file_outside_project?
-          !file_in_project? && File.exist?(original_file_path)
-        end
+        def path_file_in_project? = @path_file_in_project ||= original_file_path.start_with?(::RailsSpotlight.config.rails_root)
+        def file_in_project? = File.exist?(File.join(::RailsSpotlight.config.rails_root, original_file_path))
+        def file_in_project_app_dir? = File.exist?(File.join(::RailsSpotlight.config.rails_root, 'app', original_file_path))
+        def file_in_project_views_dir? = File.exist?(File.join(::RailsSpotlight.config.rails_root, 'app', 'views', original_file_path))
+        def file_outside_project? = !file_in_project? && File.exist?(original_file_path)
 
         def editing_outside_project_file_is_blocked?(file_path)
           return false unless file_outside_project?
@@ -109,13 +79,9 @@ module RailsSpotlight
           !file_path.start_with?(::RailsSpotlight.config.rails_root)
         end
 
-        def block_editing_files?
-          ::RailsSpotlight.config.block_editing_files
-        end
-
-        def block_editing_files_outside_of_the_project?
-          ::RailsSpotlight.config.block_editing_files_outside_of_the_project
-        end
+        def block_editing_files? = ::RailsSpotlight.config.block_editing_files
+        def block_editing_files_outside_of_the_project? = ::RailsSpotlight.config.block_editing_files_outside_of_the_project
+        def enabled? = ::RailsSpotlight.config.file_manager_enabled
       end
     end
   end

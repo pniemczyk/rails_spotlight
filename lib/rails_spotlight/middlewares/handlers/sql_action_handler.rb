@@ -5,10 +5,11 @@ module RailsSpotlight
     module Handlers
       class SqlActionHandler < BaseActionHandler
         def execute
-          return transaction unless ActiveSupport.const_defined?('ExecutionContext')
+          raise Forbidden.new('SQL is disabled', code: :disabled_sql_console_settings) unless enabled?
+          return transactional { transaction } unless ActiveSupport.const_defined?('ExecutionContext')
 
           ActiveSupport::ExecutionContext.set(rails_spotlight: request_id) do
-            transaction
+            transactional { transaction }
           end
         end
 
@@ -18,7 +19,7 @@ module RailsSpotlight
           return block.call if force_execution?
 
           ActiveRecord::Base.transaction do
-            begin
+            begin # rubocop:disable Style/RedundantBegin
               block.call
             ensure
               raise ActiveRecord::Rollback
@@ -36,9 +37,7 @@ module RailsSpotlight
           end
         end
 
-        def run # rubocop:disable Metrics/AbcSize
-          RailsSpotlight.config.logger && RailsSpotlight.config.logger.info("Executing query: #{query}") # rubocop:disable Style/SafeNavigation
-
+        def run
           return self.result = ActiveRecord::Base.connection.exec_query(query) if connection_options.blank? || !ActiveRecord::Base.respond_to?(:connects_to)
 
           connections = ActiveRecord::Base.connects_to(**connection_options)
@@ -53,50 +52,34 @@ module RailsSpotlight
 
         def json_response_body
           {
-            query: query,
-            result: result,
-            logs: logs,
+            query:, result:, logs:,
             error: error.present? ? error.inspect : nil,
             query_mode: force_execution? ? 'force' : 'default'
           }
         end
 
         def logger(_, started, finished, unique_id, payload)
-          logs << { time: started, end: finished, unique_id: unique_id }.merge(
+          logs << { time: started, end: finished, unique_id: }.merge(
             payload.as_json(except: %i[connection method name filename line transaction])
           )
         end
 
-        def logs
-          @logs ||= []
-        end
+        def logs = @logs ||= []
+        def query = @query ||= body_fetch('query')
+        def raw_options = @raw_options ||= body_fetch('options', {}) || {}
+        def mode = @mode ||= body_fetch('mode', 'default')
+        def use = @use ||= { 'shard' => 'default', 'role' => 'reading' }.merge(raw_options.fetch('use', {}))
 
-        def query
-          @query ||= body_fetch('query')
-        end
-
-        def raw_options
-          @raw_options ||= body_fetch('options', {}) || {}
-        end
-
-        def mode
-          @mode ||= body_fetch('mode', 'default')
-        end
-
-        def use
-          @use ||= { 'shard' => 'default', 'role' => 'reading' }.merge(raw_options.fetch('use', {}))
-        end
-
+        # TODO: Check for each rails version
         def connection_options
           @connection_options ||= raw_options
-                                    .symbolize_keys
-                                    .slice(:database, :shards)
-                                    .reject { |_, v| v.nil? || (!v.is_a?(TrueClass) && !v.is_a?(FalseClass) && v.empty?) } # TODO: Check for each rails version
+                                  .symbolize_keys
+                                  .slice(:database, :shards)
+                                  .reject { |_, v| v.nil? || (!v.is_a?(TrueClass) && !v.is_a?(FalseClass) && v.empty?) }
         end
 
-        def force_execution?
-          @force_execution ||= mode == 'force'
-        end
+        def force_execution? = @force_execution ||= mode == 'force'
+        def enabled? = ::RailsSpotlight.config.sql_console_enabled?
       end
     end
   end

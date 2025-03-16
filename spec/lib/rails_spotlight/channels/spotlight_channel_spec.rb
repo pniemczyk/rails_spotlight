@@ -1,6 +1,6 @@
 require 'rails_helper'
 require 'rails_spotlight/channels/handlers'
-require 'rails_spotlight/channels/handlers/live_console_handler'
+require 'rails_spotlight/channels/handlers/console_handler'
 require 'rails_spotlight/channels/handlers/logs_handler'
 require 'rails_spotlight/channels/spotlight_channel'
 
@@ -22,7 +22,7 @@ RSpec.describe RailsSpotlight::Channels::SpotlightChannel, type: :channel do
       let(:data) { { 'type' => 'console', 'command' => '2 + 2', 'inspect_types' => true, 'project' => 'FakeApp' } }
 
       it 'executes the command and publishes the output' do
-        expect(::RailsSpotlight.config).to receive(:live_logs_enabled?).and_return(true)
+        expect(::RailsSpotlight.config).to receive(:cable_logs_enabled?).and_return(true)
         perform :receive, data
 
         output = transmissions.last
@@ -47,7 +47,7 @@ RSpec.describe RailsSpotlight::Channels::SpotlightChannel, type: :channel do
       let(:data) { { 'type' => 'console', 'command' => '2 + 2', 'inspect_types' => true, 'project' => 'DifferentProject' } }
 
       it 'sends an error message about project mismatch' do
-        expect(::RailsSpotlight.config).to receive(:live_logs_enabled?).and_return(true)
+        expect(::RailsSpotlight.config).to receive(:cable_logs_enabled?).and_return(true)
         perform :receive, data
 
         output = transmissions.last

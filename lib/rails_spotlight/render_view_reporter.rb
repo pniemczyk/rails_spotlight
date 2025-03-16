@@ -5,10 +5,10 @@ module RailsSpotlight
     def self.report_rendered_view_locals(view, locals: nil, params: nil, show_devise: false, skip_vars: [], metadata: {})
       ActiveSupport::Notifications.instrument(
         'render_view.locals',
-        params: params,
+        params:,
         locals: serialize_as_json(locals),
-        instance_variables: dev_instance_variables(view, skip_vars: skip_vars, show_devise: show_devise),
-        metadata: metadata
+        instance_variables: dev_instance_variables(view, skip_vars:, show_devise:),
+        metadata:
       )
     end
 
