@@ -1,3 +1,4 @@
+  ENABLED: true
   # Default configuration for RailsSpotlight
   PROJECT_NAME: <%=Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name%>
   SOURCE_PATH: <%=Rails.root%>
@@ -15,6 +16,7 @@
   SKIP_RENDERED_IVARS: []
   
   # Features
+  LOGS_ENABLED: true
   FILE_MANAGER_ENABLED: true
   RUBOCOP_ENABLED: true
   SQL_CONSOLE_ENABLED: true

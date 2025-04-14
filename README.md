@@ -38,6 +38,7 @@ file will be created in `config/rails_spotlight.yml`
 ### Configuration options
 
 ```yaml
+  ENABLED: true
   # Default configuration for RailsSpotlight
   PROJECT_NAME: <%=Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name%>
   SOURCE_PATH: <%=Rails.root%>
@@ -142,7 +143,6 @@ You can add to your Initializers `config/initializers/rails_spotlight.rb` file w
     defined?(Hutch::Logging) && Hutch::Logging.logger&.extend(RailsSpotlight::LogInterceptor)
   end
 ```
-
 
 ## Troubleshooting
 

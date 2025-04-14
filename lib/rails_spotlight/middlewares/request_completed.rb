@@ -14,15 +14,12 @@ module RailsSpotlight
       end
 
       def call(env)
+        return app.call(env) if skip?(env['PATH_INFO']) || (env['HTTP_CONNECTION'] == 'Upgrade' && env['HTTP_UPGRADE'] == 'websocket')
         return app.call(env) unless ::RailsSpotlight.config.request_completed_broadcast_enabled?
 
-        if skip?(env['PATH_INFO']) || (env['HTTP_CONNECTION'] == 'Upgrade' && env['HTTP_UPGRADE'] == 'websocket')
-          app.call(env)
-        else
-          status, headers, body = app.call(env)
-          publish_event(status, headers, env)
-          [status, headers, body]
-        end
+        status, headers, body = app.call(env)
+        publish_event(status, headers, env)
+        [status, headers, body]
       rescue => e # rubocop:disable Style/RescueStandardError
         ::RailsSpotlight.config.logger.error "Error in RailsSpotlight::Middlewares::RequestCompletedHandler instrumentation: #{e.message}"
         app.call(env)

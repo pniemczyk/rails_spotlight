@@ -6,22 +6,29 @@ require_relative 'log_interceptor'
 module RailsSpotlight
   class Railtie < ::Rails::Railtie
     initializer 'rails_spotlight.inject_middlewares' do
-      insert_base_middlewares unless Rails.env.production?
+      next unless ::RailsSpotlight.config.enabled?
+
+      insert_base_middlewares
     end
 
     initializer 'rails_spotlight.log_interceptor' do
-      unless Rails.env.production?
-        Rails.logger&.extend(LogInterceptor)
-        defined?(Sidekiq::Logger) && Sidekiq.logger&.extend(LogInterceptor)
-      end
+      next unless ::RailsSpotlight.config.enabled?
+      next unless ::RailsSpotlight.config.logs_enabled?
+
+      Rails.logger&.extend(LogInterceptor)
+      defined?(Sidekiq::Logger) && Sidekiq.logger&.extend(LogInterceptor)
     end
 
     initializer 'rails_spotlight.subscribe_to_notifications' do
-      AppNotifications.subscribe unless Rails.env.production?
+      next unless ::RailsSpotlight.config.enabled?
+
+      AppNotifications.subscribe
     end
 
     initializer 'rails_spotlight.action_cable_setup' do
-      insert_action_cable_helpers unless Rails.env.production?
+      next unless ::RailsSpotlight.config.enabled?
+
+      insert_action_cable_helpers
     end
 
     def insert_action_cable_helpers
@@ -53,6 +60,7 @@ module RailsSpotlight
       app.middleware.use ::RailsSpotlight::Middlewares::MainRequestHandler
 
       return unless ::RailsSpotlight.config.request_completed_broadcast_enabled?
+      return unless ActionCable.server.config&.cable&.dig(:adapter).present?
 
       # app.middleware.insert_after ::RailsSpotlight::Middlewares::HeaderMarker, RailsSpotlight::Middlewares::RequestCompleted, app.config
       if defined? ActionDispatch::Executor

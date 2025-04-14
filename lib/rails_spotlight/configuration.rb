@@ -40,13 +40,15 @@ module RailsSpotlight
       @devise_mapping
     ].freeze
 
-    attr_reader :project_name, :source_path, :logger, :storage_path, :storage_pool_size, :middleware_skipped_paths,
-                :not_encodable_event_values, :cable_mount_path,
+    attr_reader :enabled, :project_name, :source_path, :logger, :storage_path, :storage_pool_size, :middleware_skipped_paths,
+                :not_encodable_event_values, :cable_mount_path, :logs_enabled,
                 :file_manager_enabled, :block_editing_files, :block_editing_files_outside_of_the_project, :skip_rendered_ivars,
                 :directory_index_ignore, :rubocop_enabled, :rubocop_config_path, :use_cable, :default_rs_src,
                 :form_js_execution_token, :sql_console_enabled, :irb_console_enabled, :data_access_token
 
     def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
+      @enabled = bool_val(:enabled, opts, default: false)
+      @logs_enabled = bool_val(:logs_enabled, opts, default: true)
       @project_name = opts[:project_name] || detect_project_name
       @source_path = opts[:source_path] || self.class.rails_root
       @logger = opts[:logger] || Logger.new(File.join(self.class.rails_root, 'log', 'rails_spotlight.log'))
@@ -80,6 +82,8 @@ module RailsSpotlight
     def auto_mount_cable = @auto_mount_cable && use_cable && action_cable_present?
     def action_cable_present? = defined?(ActionCable) && true
 
+    alias enabled? enabled
+    alias logs_enabled? logs_enabled
     alias cable_console_enabled? cable_console_enabled
     alias cable_logs_enabled? cable_logs_enabled
     alias use_cable? use_cable

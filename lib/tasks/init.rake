@@ -10,6 +10,7 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
     config_path = Rails.root.join('config', 'rails_spotlight.yml')
 
     default_config = <<~YAML
+      ENABLED: true
       # Default configuration for RailsSpotlight
       PROJECT_NAME: <%=Rails.application.class.respond_to?(:module_parent_name) ? Rails.application.class.module_parent_name : Rails.application.class.parent_name%>
       SOURCE_PATH: <%=Rails.root%>
@@ -27,6 +28,7 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
       SKIP_RENDERED_IVARS: []
       
       # Features
+      LOGS_ENABLED: true
       FILE_MANAGER_ENABLED: true
       RUBOCOP_ENABLED: true
       SQL_CONSOLE_ENABLED: true
@@ -123,9 +125,9 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
 
     case layout_format
     when 'slim', 'haml'
-      puts "- if Rails.env.development?\n  = render 'layouts/#{partial_name.split('.').first}'" # rubocop:disable Style/StringLiteralsInInterpolation
+      puts "- if defined?(RailsSpotlight) && Rails.env.development?\n  = render 'layouts/#{partial_name.split('.').first}'" # rubocop:disable Style/StringLiteralsInInterpolation
     else
-      puts "<% if Rails.env.development? %>\n  <%= render 'layouts/#{partial_name.split('.').first}' %>\n<% end %>" # rubocop:disable Style/StringLiteralsInInterpolation
+      puts "<% if defined?(RailsSpotlight) && Rails.env.development? %>\n  <%= render 'layouts/#{partial_name.split('.').first}' %>\n<% end %>" # rubocop:disable Style/StringLiteralsInInterpolation
     end
   end
 end

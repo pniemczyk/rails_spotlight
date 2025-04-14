@@ -38,9 +38,9 @@ module RailsSpotlight
 
     private
 
-    def _skip_logging?(message)
+    def _skip_cable_logging?(message)
       return false unless ::RailsSpotlight.config.use_cable?
-      return false unless message.is_a?(String)
+      return false unless ActionCable.server.config&.cable&.dig(:adapter).present?
 
       message.include?(::RailsSpotlight::Channels::SPOTLIGHT_CHANNEL)
     end
@@ -60,13 +60,14 @@ module RailsSpotlight
         end
       end
 
-      return if _skip_logging?(message)
+      return unless message.is_a?(String)
 
       callsite = Utils.dev_callsite(caller.drop(1))
       name = progname.is_a?(String) || progname.is_a?(Symbol) ? progname : nil
-      message = yield if message.nil? && block_given?
 
       AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, (callsite || {}).merge(message:, level: severity, progname: name)) if AppRequest.current
+      return if _skip_cable_logging?(message)
+
       ::RailsSpotlight::Channels::SpotlightChannel.broadcast_log(message, level, callsite, name)
     rescue StandardError => e
       RailsSpotlight.config.logger.fatal("#{e.message}\n #{e.backtrace&.join("\n ")}")

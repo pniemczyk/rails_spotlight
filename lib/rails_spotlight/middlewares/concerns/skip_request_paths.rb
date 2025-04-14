@@ -3,7 +3,7 @@
 module RailsSpotlight
   module Middlewares
     module SkipRequestPaths
-      PATHS_TO_SKIP = %w[/__better_errors /__rails_spotlight /__meta_request].freeze
+      PATHS_TO_SKIP = %w[/__better_errors /__rails_spotlight /__meta_request /rails].freeze
 
       private
 
