@@ -25,6 +25,89 @@ group :development do
 end
 ```
 
+## Using gems locally with Gemfile.local (No Git Pollution)
+
+This guide shows you how to use any gem **locally in development** without modifying your app’s main `Gemfile`. It’s perfect for plugin development, debugging, or testing gems privately.
+
+The setup also works with **`puma-dev`** out of the box and ensures your local changes stay out of Git.
+
+---
+
+###  1. Add a bundle Wrapper to Your Shell
+
+Paste this function into your `~/.zshrc`, `~/.bashrc`, or `~/.profile`:
+
+```bash
+bundle() {
+  local gemfile_local="Gemfile.local"
+  local lockfile_local="Gemfile.local.lock"
+  local lockfile_default="Gemfile.lock"
+
+  if [[ "$1" == "install" ]]; then
+    echo "[bundle] Running standard install with Gemfile"
+    command bundle install "${@:2}"
+
+    if [ -f "$gemfile_local" ]; then
+      echo "[bundle] Removing $lockfile_local if it exists"
+      rm -f "$lockfile_local"
+
+      echo "[bundle] Running install with Gemfile.local"
+      BUNDLE_GEMFILE="$gemfile_local" command bundle install "${@:2}"
+    fi
+  else
+    if [ -f "$gemfile_local" ]; then
+      BUNDLE_GEMFILE="$gemfile_local" command bundle "$@"
+    else
+      command bundle "$@"
+    fi
+  fi
+}
+```
+
+### 2. Add the setup script
+
+Paste this function into your `~/.zshrc`, `~/.bashrc`, or `~/.profile`:
+```bash
+setup_local_gemfile() {
+  echo 'export BUNDLE_GEMFILE=Gemfile.local' > .pumaenv
+
+  cat > Gemfile.local <<'RUBY'
+gemfile = File.join(File.dirname(__FILE__), 'Gemfile')
+if File.readable?(gemfile)
+  puts "Loading #{gemfile}..." if $DEBUG
+  instance_eval(File.read(gemfile))
+end
+RUBY
+
+  {
+    echo .pumaenv
+    echo Gemfile.local
+    echo Gemfile.local.lock
+  } >> .git/info/exclude
+
+  echo "[setup] Local Gemfile environment ready!"
+}
+```
+
+### 3. Go to your app folder modify Gemfile.local
+
+Just add your gem like this 
+
+```ruby
+group :development do
+  gem 'rails_spotlight'
+end
+```
+
+### 4. Install all and restart puma.dev if needed
+```bash
+# if you didn't reload you bash/zsh just load rc or profile file here by source {my_file}
+setup_local_gemfile
+bundle install
+puma-dev -stop
+```
+
+
 ## Configuration
 
 Generate configuration file by running:
