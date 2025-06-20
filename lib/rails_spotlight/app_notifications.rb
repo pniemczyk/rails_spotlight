@@ -75,14 +75,13 @@ module RailsSpotlight
       Event.new(name, start, ending, transaction_id, payload)
     }
 
-
     # Subscribe to all relevant events
     def self.subscribe
       # Skip RailsSpotlight subscriptions during migrations
       return if migrating?
 
       new
-        .subscribe('rsl.notification.log') # We do not publish events to this channel for now
+        # .subscribe('rsl.notification.log') # We do not publish events to this channel for now
         .subscribe('sql.active_record', &SQL_BLOCK)
         .subscribe('sql.sequel', &SQL_BLOCK)
         .subscribe('render_partial.action_view', &VIEW_BLOCK)
@@ -100,9 +99,9 @@ module RailsSpotlight
         .subscribe('cache_delete.active_support', &CACHE_BLOCK)
         .subscribe('cache_exist?.active_support', &CACHE_BLOCK)
         .subscribe('render_view.locals', &VIEW_LOCALS_BLOCK)
-        # .subscribe('start_processing.action_controller', &CONTROLLER_BLOCK)
-        # .subscribe('redirect_to.action_controller', &CONTROLLER_BLOCK)
-        # .subscribe('send_file.action_controller', &CONTROLLER_BLOCK)
+      # .subscribe('start_processing.action_controller', &CONTROLLER_BLOCK)
+      # .subscribe('redirect_to.action_controller', &CONTROLLER_BLOCK)
+      # .subscribe('send_file.action_controller', &CONTROLLER_BLOCK)
 
       # TODO: Consider adding these events
       # start_processing.action_controller: Triggered when a controller action starts processing a request.

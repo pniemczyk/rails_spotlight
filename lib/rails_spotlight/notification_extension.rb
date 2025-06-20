@@ -1,14 +1,14 @@
+# frozen_string_literal: true
+
 module RailsSpotlight
   module NotificationExtension
-    def instrument(name, payload = {}, &block)
+    def instrument(name, payload = {}, &)
       if payload.is_a?(Hash) && !payload.key?(:original_callsite)
         callsite = ::RailsSpotlight::Utils.dev_callsite(caller_locations)
-        if callsite && callsite[:filename].present?
-          payload[:original_callsite] = callsite
-        end
+        payload[:original_callsite] = callsite if callsite && callsite[:filename].present?
       end
 
-      super(name, payload, &block)
+      super
     end
   end
 end

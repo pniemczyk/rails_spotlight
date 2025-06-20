@@ -6,7 +6,7 @@ require 'active_support/core_ext'
 
 module RailsSpotlight
   # Subclass of ActiveSupport Event that is JSON encodable
-  class Event < ActiveSupport::Notifications::Event
+  class Event < ActiveSupport::Notifications::Event # rubocop:disable Metrics/ClassLength
     NOT_JSON_ENCODABLE = 'Not JSON Encodable'
     NON_SERIALIZABLE_CLASSES = [Proc, Binding, Method, UnboundMethod, Thread, IO, Class, Module].freeze
 
@@ -45,16 +45,16 @@ module RailsSpotlight
       transform_hash(payload, deep: true) do |hash, key, value|
         hash[key] = encode_json_safe_value(value)
       end.with_indifferent_access
-    rescue
+    rescue # rubocop:disable Style/RescueStandardError
       {}
     end
 
     def not_json_encodable_and_seen(value)
-       seen_not_encodable.add(value.__id__)
-       NOT_JSON_ENCODABLE
+      seen_not_encodable.add(value.__id__)
+      NOT_JSON_ENCODABLE
     end
 
-    def encode_json_safe_value(value)
+    def encode_json_safe_value(value) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       return not_json_encodable_and_seen(value) if not_encodable?(value)
       return NOT_JSON_ENCODABLE unless value.respond_to?(:to_json)
 
@@ -62,7 +62,11 @@ module RailsSpotlight
       when ActionDispatch::Http::Headers
         value = value.to_h.select { |k, _| k.upcase == k }
       when Array
-        value = value.map { |v| encode_json_safe_value(v) rescue NOT_JSON_ENCODABLE }
+        value = value.map do |v|
+          encode_json_safe_value(v)
+        rescue StandardError
+          NOT_JSON_ENCODABLE
+        end
       when Hash
         value = transform_hash(value, deep: true) { |h, k, v| h[k] = encode_json_safe_value(v) }
       when ActiveRecord::Relation::QueryAttribute
@@ -70,15 +74,13 @@ module RailsSpotlight
       # when ActionController::Parameters
       #   value = value.to_unsafe_h rescue value.to_h
       else
-        if defined?(ActiveRecord::Relation::QueryAttribute) && value.is_a?(ActiveRecord::Relation::QueryAttribute)
-          value = map_relation_query_attribute(value)
-        end
+        value = map_relation_query_attribute(value) if defined?(ActiveRecord::Relation::QueryAttribute) && value.is_a?(ActiveRecord::Relation::QueryAttribute)
       end
 
       begin
         value.to_json(methods: [:duration])
         value
-      rescue
+      rescue # rubocop:disable Style/RescueStandardError
         NOT_JSON_ENCODABLE
       end
     end
@@ -111,11 +113,11 @@ module RailsSpotlight
       options[:safe_descent][original] = transformed
     end
 
-    def deep_transform_value(value, options, &block)
+    def deep_transform_value(value, options, &)
       return value unless value.is_a?(Hash)
       return cached_transformation(value, options) if already_transformed?(value, options)
 
-      transform_hash(value, options, &block)
+      transform_hash(value, options, &)
     end
 
     # ActiveRecord::Relation::QueryAttribute implementation changed in Rails 7.1 it getting binds need to be manually added
@@ -131,7 +133,7 @@ module RailsSpotlight
       }
     end
 
-    def not_encodable?(value)
+    def not_encodable?(value) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       return true if value_too_large?(value)
       return true if NON_SERIALIZABLE_CLASSES.any? { |klass| value.is_a?(klass) }
 
@@ -148,11 +150,11 @@ module RailsSpotlight
     end
 
     def value_too_large?(value)
-      return false unless defined?(ObjectSpace) && defined?(ObjectSpace.memsize_of)
+      return false unless defined?(ObjectSpace)
       return false unless RailsSpotlight.config.maximum_event_value_size
 
       (ObjectSpace.memsize_of(value) > RailsSpotlight.config.maximum_event_value_size)
-    rescue
+    rescue # rubocop:disable Style/RescueStandardError
       false
     end
 

@@ -48,7 +48,7 @@ module RailsSpotlight
       app.config.action_cable.allowed_request_origins = existing_origins | [%r{\Achrome-extension://.*\z}]
     end
 
-    def insert_base_middlewares
+    def insert_base_middlewares # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
       app.middleware.use ::RailsSpotlight::Middlewares::RequestHandler
 
       if defined? ActionDispatch::DebugExceptions

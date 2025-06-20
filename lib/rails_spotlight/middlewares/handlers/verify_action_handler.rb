@@ -23,7 +23,7 @@ module RailsSpotlight
             version: request_spotlight_version,
             for_projects: request_for_projects,
             current_gem_version: ::RailsSpotlight::VERSION,
-            action_cable_path: defined?(ActionCable) ? ActionCable&.server&.config&.mount_path : nil
+            action_cable_path: defined?(ActionCable) ? ActionCable.server&.config&.mount_path : nil
           }
         end
       end

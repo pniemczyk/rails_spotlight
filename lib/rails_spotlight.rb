@@ -13,7 +13,6 @@ module RailsSpotlight
   autoload :Utils,                 'rails_spotlight/utils'
   autoload :RenderViewReporter,    'rails_spotlight/render_view_reporter'
 
-
   class << self
     def config
       @config ||= Configuration.load_config

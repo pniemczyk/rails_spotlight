@@ -4,7 +4,7 @@ require 'yaml'
 require 'erb'
 
 module RailsSpotlight
-  class Configuration
+  class Configuration # rubocop:disable Metrics/ClassLength
     DEFAULT_NOT_ENCODABLE_EVENT_VALUES = {
       'ActiveRecord' => [
         'ActiveRecord::ConnectionAdapters::AbstractAdapter',
@@ -16,7 +16,7 @@ module RailsSpotlight
       'ActionDispatch' => ['ActionDispatch::Request', 'ActionDispatch::Response']
     }.freeze
 
-    MAXIMUM_EVENT_VALUE_SIZE = 100000
+    MAXIMUM_EVENT_VALUE_SIZE = 100_000
 
     DEFAULT_DIRECTORY_INDEX_IGNORE = %w[
       /.git **/*.lock **/.DS_Store /app/assets/images/** /app/assets/fonts/** /app/assets/builds/** **/.keep
@@ -49,7 +49,7 @@ module RailsSpotlight
                 :form_js_execution_token, :sql_console_enabled, :irb_console_enabled, :data_access_token,
                 :disable_active_support_subscriptions, :maximum_event_value_size
 
-    def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
+    def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/MethodLength
       @enabled = bool_val(:enabled, opts, default: false)
       @sidekiq_logs_enabled = bool_val(:logs_enabled, opts, default: false)
       @logs_enabled = bool_val(:logs_enabled, opts, default: true)
