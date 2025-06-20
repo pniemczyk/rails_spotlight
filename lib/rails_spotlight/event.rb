@@ -6,14 +6,17 @@ require 'active_support/core_ext'
 
 module RailsSpotlight
   # Subclass of ActiveSupport Event that is JSON encodable
-  #
   class Event < ActiveSupport::Notifications::Event
     NOT_JSON_ENCODABLE = 'Not JSON Encodable'
+    NON_SERIALIZABLE_CLASSES = [Proc, Binding, Method, UnboundMethod, Thread, IO, Class, Module].freeze
 
-    attr_reader :duration
+    attr_reader :duration, :seen_not_encodable
 
     def initialize(name, start, ending, transaction_id, payload)
-      super(name, start, ending, transaction_id, json_encodable(payload))
+      @seen_not_encodable = Set.new
+      raw_payload = json_encodable(payload)
+      raw_payload.merge!(raw_payload[:original_callsite]) if raw_payload[:original_callsite].present? && raw_payload[:filename].blank?
+      super(name, start, ending, transaction_id, raw_payload)
       @duration = 1000.0 * (ending - start)
     rescue # rubocop:disable Lint/RedundantCopDisableDirective, Style/RescueStandardError
       @duration = 0
@@ -36,28 +39,83 @@ module RailsSpotlight
 
     private
 
-    def json_encodable(payload) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    def json_encodable(payload)
       return {} unless payload.is_a?(Hash)
 
       transform_hash(payload, deep: true) do |hash, key, value|
-        if value.class.to_s == 'ActionDispatch::Http::Headers'
-          value = value.to_h.select { |k, _| k.upcase == k }
-        elsif value.is_a?(Array) && defined?(ActiveRecord::Relation::QueryAttribute) && value.first.is_a?(ActiveRecord::Relation::QueryAttribute)
-          value = value.map(&method(:map_relation_query_attribute))
-        elsif !value.respond_to?(:to_json) || not_encodable?(value)
-          value = NOT_JSON_ENCODABLE
-        end
-
-        begin
-          value.to_json(methods: [:duration])
-          new_value = value
-        rescue # rubocop:disable Lint/RedundantCopDisableDirective, Style/RescueStandardError
-          new_value = NOT_JSON_ENCODABLE
-        end
-        hash[key] = new_value # encode_value(value)
+        hash[key] = encode_json_safe_value(value)
       end.with_indifferent_access
-    rescue # rubocop:disable Lint/RedundantCopDisableDirective, Style/RescueStandardError
+    rescue
       {}
+    end
+
+    def not_json_encodable_and_seen(value)
+       seen_not_encodable.add(value.__id__)
+       NOT_JSON_ENCODABLE
+    end
+
+    def encode_json_safe_value(value)
+      return not_json_encodable_and_seen(value) if not_encodable?(value)
+      return NOT_JSON_ENCODABLE unless value.respond_to?(:to_json)
+
+      case value
+      when ActionDispatch::Http::Headers
+        value = value.to_h.select { |k, _| k.upcase == k }
+      when Array
+        value = value.map { |v| encode_json_safe_value(v) rescue NOT_JSON_ENCODABLE }
+      when Hash
+        value = transform_hash(value, deep: true) { |h, k, v| h[k] = encode_json_safe_value(v) }
+      when ActiveRecord::Relation::QueryAttribute
+        map_relation_query_attribute(value)
+      # when ActionController::Parameters
+      #   value = value.to_unsafe_h rescue value.to_h
+      else
+        if defined?(ActiveRecord::Relation::QueryAttribute) && value.is_a?(ActiveRecord::Relation::QueryAttribute)
+          value = map_relation_query_attribute(value)
+        end
+      end
+
+      begin
+        value.to_json(methods: [:duration])
+        value
+      rescue
+        NOT_JSON_ENCODABLE
+      end
+    end
+
+    def transform_hash(original, options = {}, &block)
+      options[:safe_descent] ||= {}.compare_by_identity
+
+      return cached_transformation(original, options) if already_transformed?(original, options)
+
+      new_hash = {}
+      cache_transformation(original, new_hash, options)
+
+      original.each do |key, value|
+        value = deep_transform_value(value, options, &block) if options[:deep]
+        block.call(new_hash, key, value)
+      end
+
+      new_hash
+    end
+
+    def already_transformed?(object, options)
+      options[:safe_descent].key?(object)
+    end
+
+    def cached_transformation(object, options)
+      options[:safe_descent][object]
+    end
+
+    def cache_transformation(original, transformed, options)
+      options[:safe_descent][original] = transformed
+    end
+
+    def deep_transform_value(value, options, &block)
+      return value unless value.is_a?(Hash)
+      return cached_transformation(value, options) if already_transformed?(value, options)
+
+      transform_hash(value, options, &block)
     end
 
     # ActiveRecord::Relation::QueryAttribute implementation changed in Rails 7.1 it getting binds need to be manually added
@@ -74,52 +132,34 @@ module RailsSpotlight
     end
 
     def not_encodable?(value)
+      return true if value_too_large?(value)
+      return true if NON_SERIALIZABLE_CLASSES.any? { |klass| value.is_a?(klass) }
+
       ::RailsSpotlight.config.not_encodable_event_values.any? do |module_name, class_names|
-        next unless safe_constantize(module_name)
+        next true unless safe_constantize(module_name)
 
         class_names.any? do |class_name|
           klass = safe_constantize(class_name)
-          next false unless klass
-
-          value.is_a?(klass)
+          klass && value.is_a?(klass)
         end
       rescue # rubocop:disable Style/RescueStandardError
         true
       end
     end
 
+    def value_too_large?(value)
+      return false unless defined?(ObjectSpace) && defined?(ObjectSpace.memsize_of)
+      return false unless RailsSpotlight.config.maximum_event_value_size
+
+      (ObjectSpace.memsize_of(value) > RailsSpotlight.config.maximum_event_value_size)
+    rescue
+      false
+    end
+
     def safe_constantize(name)
       name.constantize
     rescue NameError
       nil
-    end
-
-    def transform_hash(original, options = {}, &block)
-      options[:safe_descent] ||= {}.compare_by_identity
-
-      # Check if the hash has already been transformed to prevent infinite recursion.
-      return options[:safe_descent][original] if options[:safe_descent].key?(original)
-
-      # Create a new hash to store the transformed values.
-      new_hash = {}
-      # Store the new hash in safe_descent using the original's object_id to mark it as processed.
-      options[:safe_descent][original] = new_hash
-
-      # Iterate over each key-value pair in the original hash.
-      original.each do |key, value|
-        # If deep transformation is required and the value is a hash,
-        # recursively transform it, unless it's already been transformed.
-        if options[:deep] && Hash === value # rubocop:disable Style/CaseEquality
-          value = options[:safe_descent].fetch(value) do
-            transform_hash(value, options, &block)
-          end
-        end
-        # Apply the transformation block to the current key-value pair.
-        block.call(new_hash, key, value)
-      end
-
-      # Return the transformed hash.
-      new_hash
     end
   end
 end

@@ -16,6 +16,8 @@ module RailsSpotlight
       'ActionDispatch' => ['ActionDispatch::Request', 'ActionDispatch::Response']
     }.freeze
 
+    MAXIMUM_EVENT_VALUE_SIZE = 100000
+
     DEFAULT_DIRECTORY_INDEX_IGNORE = %w[
       /.git **/*.lock **/.DS_Store /app/assets/images/** /app/assets/fonts/** /app/assets/builds/** **/.keep
     ].freeze
@@ -41,13 +43,15 @@ module RailsSpotlight
     ].freeze
 
     attr_reader :enabled, :project_name, :source_path, :logger, :storage_path, :storage_pool_size, :middleware_skipped_paths,
-                :not_encodable_event_values, :cable_mount_path, :logs_enabled,
+                :not_encodable_event_values, :cable_mount_path, :logs_enabled, :sidekiq_logs_enabled,
                 :file_manager_enabled, :block_editing_files, :block_editing_files_outside_of_the_project, :skip_rendered_ivars,
                 :directory_index_ignore, :rubocop_enabled, :rubocop_config_path, :use_cable, :default_rs_src,
-                :form_js_execution_token, :sql_console_enabled, :irb_console_enabled, :data_access_token
+                :form_js_execution_token, :sql_console_enabled, :irb_console_enabled, :data_access_token,
+                :disable_active_support_subscriptions, :maximum_event_value_size
 
     def initialize(opts = {}) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
       @enabled = bool_val(:enabled, opts, default: false)
+      @sidekiq_logs_enabled = bool_val(:logs_enabled, opts, default: false)
       @logs_enabled = bool_val(:logs_enabled, opts, default: true)
       @project_name = opts[:project_name] || detect_project_name
       @source_path = opts[:source_path] || self.class.rails_root
@@ -65,7 +69,7 @@ module RailsSpotlight
       @block_editing_files_outside_of_the_project = bool_val(:block_editing_files_outside_of_the_project, opts, default: true)
       @file_manager_enabled = bool_val(:file_manager_enabled, opts, default: true)
       @skip_rendered_ivars = SKIP_RENDERED_IVARS + (opts[:skip_rendered_ivars] || []).map(&:to_sym)
-      @directory_index_ignore = opts[:directory_index_ignore] || DEFAULT_DIRECTORY_INDEX_IGNORE
+      @directory_index_ignore = Array(opts[:directory_index_ignore] || DEFAULT_DIRECTORY_INDEX_IGNORE)
       @rubocop_enabled = bool_val(:rubocop_enabled, opts, default: true)
       @rubocop_config_path = opts[:rubocop_config_path] ? File.join(self.class.rails_root, opts[:rubocop_config_path]) : nil
       @cable_logs_enabled = bool_val(:cable_logs_enabled, opts)
@@ -74,6 +78,8 @@ module RailsSpotlight
       @sql_console_enabled = bool_val(:sql_console_enabled, opts, default: true)
       @irb_console_enabled = bool_val(:irb_console_enabled, opts, default: true)
       @data_access_token = opts[:data_access_token].present? ? opts[:data_access_token] : nil
+      @disable_active_support_subscriptions = Array(opts[:disable_active_support_subscriptions] || [])
+      @maximum_event_value_size = opts[:maximum_event_value_size] || MAXIMUM_EVENT_VALUE_SIZE
     end
 
     def cable_console_enabled = @cable_console_enabled && use_cable && action_cable_present?
@@ -82,8 +88,8 @@ module RailsSpotlight
     def auto_mount_cable = @auto_mount_cable && use_cable && action_cable_present?
     def action_cable_present? = defined?(ActionCable) && true
 
-    alias enabled? enabled
     alias logs_enabled? logs_enabled
+    alias sidekiq_logs_enabled? sidekiq_logs_enabled
     alias cable_console_enabled? cable_console_enabled
     alias cable_logs_enabled? cable_logs_enabled
     alias use_cable? use_cable
@@ -93,6 +99,13 @@ module RailsSpotlight
     alias rubocop_enabled? rubocop_enabled
     alias sql_console_enabled? sql_console_enabled
     alias irb_console_enabled? irb_console_enabled
+
+    # We do not recommend using Rails Spotlight in production. However, if you still want to do it, a data_access_token is required
+    def enabled?
+      return enabled unless Rails.env.production?
+
+      enabled && data_access_token.present?
+    end
 
     def self.load_config
       config_file = File.join(rails_root, 'config', 'rails_spotlight.yml')

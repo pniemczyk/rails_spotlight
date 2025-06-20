@@ -62,7 +62,7 @@ module RailsSpotlight
 
       return unless message.is_a?(String)
 
-      callsite = Utils.dev_callsite(caller.drop(1))
+      callsite = Utils.dev_callsite(caller_locations.drop(1))
       name = progname.is_a?(String) || progname.is_a?(Symbol) ? progname : nil
 
       AppRequest.current.events << Event.new('rsl.notification.log', 0, 0, 0, (callsite || {}).merge(message:, level: severity, progname: name)) if AppRequest.current

@@ -25,7 +25,7 @@ module RailsSpotlight
         payload[:options][k] = payload.delete(k) unless k.in? CACHE_KEY_COLUMNS
       end
 
-      callsite = ::RailsSpotlight::Utils.dev_callsite(caller)
+      callsite = payload[:original_callsite] || ::RailsSpotlight::Utils.dev_callsite(caller_locations)
       payload.merge!(callsite) if callsite
 
       Event.new(name, start, ending, transaction_id, payload)
@@ -46,7 +46,7 @@ module RailsSpotlight
 
     SQL_BLOCK = proc { |*args|
       _name, start, ending, transaction_id, payload = args
-      callsite = ::RailsSpotlight::Utils.dev_callsite(caller)
+      callsite = payload[:original_callsite] || ::RailsSpotlight::Utils.dev_callsite(caller_locations)
       payload.merge!(callsite) if callsite
 
       Event.new(SQL_EVENT_NAME, start, ending, transaction_id, payload)
@@ -59,13 +59,30 @@ module RailsSpotlight
       Event.new(name, start, ending, transaction_id, payload)
     }
 
+    CONTROLLER_BLOCK = proc { |*args|
+      name, start, ending, transaction_id, payload = args
+      payload[:identifier] = ::RailsSpotlight::Utils.sub_source_path(payload[:identifier])
+      # Payload of redirect_to
+      # { status: 302, location: "http://localhost:3000/posts/new", request: <ActionDispatch::Request:0x00007ff1cb9bd7b8> }
+      # Payload of process_action
+      # { controller: "PostsController", action: "index", params: {"action" => "index", "controller" => "posts"}, format: :html, method: "GET", path: "/posts",
+      #   headers: #<ActionDispatch::Http::Headers:0x0055a67a519b88>, request: #<ActionDispatch::Request:0x00007ff1cb9bd7b8>, response: #<ActionDispatch::Response:0x00007f8521841ec8>,
+      #   status: 200, view_runtime: 46.848, db_runtime: 0.157
+      # }
+      # Payload of send_stream.action_controller
+      # { filename: "subscribers.csv", type: "text/csv", disposition: "attachment" }
+
+      Event.new(name, start, ending, transaction_id, payload)
+    }
+
+
     # Subscribe to all relevant events
     def self.subscribe
       # Skip RailsSpotlight subscriptions during migrations
       return if migrating?
 
       new
-        # .subscribe('rsl.notification.log') # We do not publish events to this channel for now
+        .subscribe('rsl.notification.log') # We do not publish events to this channel for now
         .subscribe('sql.active_record', &SQL_BLOCK)
         .subscribe('sql.sequel', &SQL_BLOCK)
         .subscribe('render_partial.action_view', &VIEW_BLOCK)
@@ -83,6 +100,9 @@ module RailsSpotlight
         .subscribe('cache_delete.active_support', &CACHE_BLOCK)
         .subscribe('cache_exist?.active_support', &CACHE_BLOCK)
         .subscribe('render_view.locals', &VIEW_LOCALS_BLOCK)
+        # .subscribe('start_processing.action_controller', &CONTROLLER_BLOCK)
+        # .subscribe('redirect_to.action_controller', &CONTROLLER_BLOCK)
+        # .subscribe('send_file.action_controller', &CONTROLLER_BLOCK)
 
       # TODO: Consider adding these events
       # start_processing.action_controller: Triggered when a controller action starts processing a request.
@@ -96,12 +116,15 @@ module RailsSpotlight
 
     def self.migrating?
       defined?(Rake) && Rake.application.top_level_tasks.any? do |task|
-        task.start_with?('db:migrate', 'db:schema:load', 'db:rollback')
+        task.start_with?('db:')
       end
     end
 
     def subscribe(event_name)
+      # Look for details about instrumentation => https://guides.rubyonrails.org/active_support_instrumentation.html#railties
       ActiveSupport::Notifications.subscribe(event_name) do |*args|
+        next if ::RailsSpotlight.config.disable_active_support_subscriptions.include?(event_name)
+
         event = block_given? ? yield(*args) : Event.new(*args)
         AppRequest.current.events << event if AppRequest.current
       end

@@ -4,16 +4,14 @@ module RailsSpotlight
   module Utils
     module_function
 
-    def dev_callsite(caller)
-      app_line = caller.detect { |c| c.start_with? RailsSpotlight.config.rails_root }
-      return nil unless app_line
-
-      _, filename, _, line, _, method = app_line.split(/^(.*?)(:(\d+))(:in `(.*)')?$/)
+    def dev_callsite(caller_locations)
+      loc = caller_locations.detect { |c| c.path.start_with? RailsSpotlight.config.rails_root }
+      return nil unless loc
 
       {
-        filename: sub_source_path(filename),
-        line: line.to_i,
-        method:
+        filename: sub_source_path(loc.path),
+        line: loc.lineno,
+        method: loc.label
       }
     rescue # rubocop:disable Style/RescueStandardError, Lint/SuppressedException
     end

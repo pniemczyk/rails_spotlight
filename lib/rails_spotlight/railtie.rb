@@ -16,7 +16,7 @@ module RailsSpotlight
       next unless ::RailsSpotlight.config.logs_enabled?
 
       Rails.logger&.extend(LogInterceptor)
-      defined?(Sidekiq::Logger) && Sidekiq.logger&.extend(LogInterceptor)
+      ::RailsSpotlight.config.sidekiq_logs_enabled? && defined?(Sidekiq::Logger) && Sidekiq.logger&.extend(LogInterceptor)
     end
 
     initializer 'rails_spotlight.subscribe_to_notifications' do

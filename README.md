@@ -134,15 +134,20 @@ file will be created in `config/rails_spotlight.yml`
   RAILS_SPOTLIGHT_PROJECT:
   
   # Prevent from processing and sending some data to the extension
-  MIDDLEWARE_SKIPPED_PATHS: []
+  MIDDLEWARE_SKIPPED_PATHS: ['/rails']
   NOT_ENCODABLE_EVENT_VALUES:
   SKIP_RENDERED_IVARS: []
   
   # Features
+  LOGS_ENABLED: true
+  SIDEKIQ_LOGS_ENABLED: false
   FILE_MANAGER_ENABLED: true
   RUBOCOP_ENABLED: true
   SQL_CONSOLE_ENABLED: true
   IRB_CONSOLE_ENABLED: true
+  
+  # Disable ActiveSupport subscriptions
+  DISABLE_ACTIVE_SUPPORT_SUBSCRIPTIONS: []
   
   # File manager configuration
   BLOCK_EDITING_FILES: false
@@ -231,7 +236,36 @@ You can add to your Initializers `config/initializers/rails_spotlight.rb` file w
 
 Known issue:
 
-Authentication error when using: 
+### Stack too deep:
+  
+Usually happens when you have a lot of nested partials or locals containing complex objects.
+  
+Solution:
+    
+- first try to add `render_partial.action_view` and `render_template.action_view` to the `DISABLE_ACTIVE_SUPPORT_SUBSCRIPTIONS` in the config file.
+- if it doesn't help, try to disable more of the subscriptions full list:  
+  * sql.active_record
+  * sql.sequel
+  * render_partial.action_view
+  * render_template.action_view
+  * process_action.action_controller.exception
+  * process_action.action_controller
+  * cache_read.active_support
+  * cache_generate.active_support
+  * cache_fetch_hit.active_support
+  * cache_write.active_support
+  * cache_delete.active_support
+  * cache_exist?.active_support
+  * render_view.locals
+- last you can disable `LOGS_ENABLED` or entire gem via `ENABLED` flag
+- If you are sure what in you app can cause issue you can add it to the `NOT_ENCODABLE_EVENT_VALUES` list in the config file like this:
+```yaml
+  NOT_ENCODABLE_EVENT_VALUES:
+    Lookbook:
+      - Lookbook::Param
+```
+
+### Authentication error when using: 
   - Specific authentication method and action cable
   - AUTO_MOUNT_CABLE: true
 
@@ -271,4 +305,3 @@ Gem is created for the Chrome extension [Rails Spotlight](https://chrome.google.
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-

@@ -33,6 +33,9 @@ namespace :rails_spotlight do # rubocop:disable Metrics/BlockLength
       RUBOCOP_ENABLED: true
       SQL_CONSOLE_ENABLED: true
       IRB_CONSOLE_ENABLED: true
+    
+      # Disable ActiveSupport subscriptions
+      DISABLE_ACTIVE_SUPPORT_SUBSCRIPTIONS: []
       
       # File manager configuration
       BLOCK_EDITING_FILES: false
